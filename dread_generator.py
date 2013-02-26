@@ -2,7 +2,7 @@
 """ .cub cubic graph file parser
 and dreadnaut commands generator
 By Gwenegan Hudin
-11/02/2013/home/gwaihir/Dropbox/Etude Pratique/dread_parser.py
+11/02/2013
 gwenegan.hudin@insa-rennes.fr
 
 """
