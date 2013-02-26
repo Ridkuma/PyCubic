@@ -49,7 +49,7 @@ temp.write(command)
 temp.flush()
 
 """ dreadnaut to G6 conversion """
-# Fonctionnel sous Unix, à tester sous Windows
+# Fonctionnel sous Unix, à changer pour Windows
 subprocess.call("\"" +  os.getcwd() + "/\"" + "dretog " + temp.name + 
                 " \"" +  os.getcwd() + "/\"" + outputname, shell = True)
 
