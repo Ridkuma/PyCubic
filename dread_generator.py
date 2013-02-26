@@ -9,9 +9,7 @@ gwenegan.hudin@insa-rennes.fr
 
 import subprocess
 import tempfile
-import shutil
 import os
-import sys
 import fileinput
 
 """ Script variables """
@@ -21,6 +19,10 @@ f = fileinput.input()
 
 # Get number of vertices and degree
 n, deg = [int(x) for x in f.readline().split()]
+
+# Get filename and prepare outputfile name
+inputname, extension = f.filename().split('.')
+outputname = inputname + ".g6"
 
 """ dreadnaut commands generation """
 
@@ -47,9 +49,9 @@ temp.write(command)
 temp.flush()
 
 """ dreadnaut to G6 conversion """
-# ZONE DE TRAVAUX, FERMER LES YEUX
-os.system("sudo \"" +  os.getcwd() + "/\"" + "dretog " + temp.name + 
-        " \"" +  os.getcwd() + "/\"" + "dread_sample")
+# Fonctionnel sous Unix, à tester sous Windows
+subprocess.call("\"" +  os.getcwd() + "/\"" + "dretog " + temp.name + 
+                " \"" +  os.getcwd() + "/\"" + outputname, shell = True)
 
 temp.close()
 
