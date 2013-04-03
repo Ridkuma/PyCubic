@@ -1,6 +1,6 @@
 ﻿#!/usr/bin/python
 """ G6 to CUB file conversion tool
-By Gwenegan Hudin
+By Gwenegan Hudin & Nicolas Busseneau
 11/02/2013
 gwenegan.hudin@insa-rennes.fr
 
@@ -40,11 +40,12 @@ def convert(inFile):
     outputname = inFile.name.split('.')[0]
     outFile = open(os.getcwd() + "/" + outputname + ".cub", 'w+')
 
-    outFile.write(str(order) + "\t" + "3 \n")
+    outFile.write(str(order) + "\n")
     for i in range(0, order) :
         outFile.write(str(i) + "\t")
         edges = "\t".join(graphSets[i])
         outFile.write(edges + "\n")
+        
         
     outFile.flush()
 

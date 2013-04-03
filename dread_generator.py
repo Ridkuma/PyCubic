@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """ .cub cubic graph file parser
 and dreadnaut commands generator
-By Gwenegan Hudin
+By Gwenegan Hudin & Nicolas Busseneau
 11/02/2013
 gwenegan.hudin@insa-rennes.fr
 
@@ -12,10 +12,6 @@ import tempfile
 import os
 import fileinput
 
-""" Script variables """
-
-# Open the input file
-f = fileinput.input()
 
 def convert(f):
     # Get number of vertices and degree
@@ -55,3 +51,7 @@ def convert(f):
                     " \"" +  os.getcwd() + "/\"" + outputname, shell = True)
 
     temp.close()
+    
+# Open the input file
+f = fileinput.input()
+convert(f)
