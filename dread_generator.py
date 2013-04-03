@@ -18,7 +18,7 @@ import fileinput
 f = fileinput.input()
 
 # Get number of vertices and degree
-n, deg = [int(x) for x in f.readline().split()]
+n = int(f.readline())
 
 # Get filename and prepare outputfile name
 inputname, extension = f.filename().split('.')
@@ -33,7 +33,7 @@ header = "n=" + str(n) + '\n'
 s = ""
 for line in f :
     set = line.split()
-    for v in set[1:deg+1] :
+    for v in set[1:4] :
         s += " "+ v
     s+= "; "
 
@@ -49,7 +49,7 @@ temp.write(command)
 temp.flush()
 
 """ dreadnaut to G6 conversion """
-# Fonctionnel sous Unix, à changer pour Windows
+# Works on Unix, TODO : Adapt for Windows
 subprocess.call("\"" +  os.getcwd() + "/\"" + "dretog " + temp.name + 
                 " \"" +  os.getcwd() + "/\"" + outputname, shell = True)
 
