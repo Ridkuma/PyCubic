@@ -7,22 +7,10 @@ gwenegan.hudin@insa-rennes.fr
 """
 
 import re
-import os
-import fileinput
+import os, sys
 import tempfile
 import subprocess
 import zlib, zipfile
-
-# Opens the input file (stdin if not given)
-inFile = fileinput.input()
-if zipfile.is_zipfile(inFile):
-    myzip = zipfile.ZipFile(inFile)
-    for filename in myzip.namelist():
-        myFile = myzip.open(filename, 'rU')
-        convert(myFile)
-    myzip.close()
-else:
-    convert(inFile)
 
 def convert(inFile):
     inFile.readline()
@@ -30,7 +18,7 @@ def convert(inFile):
     # Run showg and store output in a tempFile file
     tempFile = tempfile.NamedTemporaryFile()
     tempFile.readline()
-    subprocess.call("\"" +  os.getcwd() + "/\"" + "showg " + "\"" + inFile.filename() + 
+    subprocess.call("\"" +  os.getcwd() + "/\"" + "showg " + "\"" + inFile.name + 
                     "\" " + tempFile.name, shell = True)
 
     # Looks for the order of the graph in the file
@@ -49,7 +37,7 @@ def convert(inFile):
         graphSets.insert(int(node), edges)
         
     # Generates the .cub output file
-    outputname = inFile.filename().split('.')[0]
+    outputname = inFile.name.split('.')[0]
     outFile = open(os.getcwd() + "/" + outputname + ".cub", 'w+')
 
     outFile.write(str(order) + "\t" + "3 \n")
@@ -60,6 +48,17 @@ def convert(inFile):
         
     outFile.flush()
 
-    fileinput.close()
+    inFile.close()
     tempFile.close()
     outFile.close()
+
+# Opens the input file (stdin if not given)
+inFile = open(sys.argv[1])
+if zipfile.is_zipfile(inFile):
+    myzip = zipfile.ZipFile(inFile)
+    for filename in myzip.namelist():
+        myFile = myzip.open(filename, 'rU')
+        convert(myFile)
+    myzip.close()
+else:
+    convert(inFile)
