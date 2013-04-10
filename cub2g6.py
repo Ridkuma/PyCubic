@@ -61,19 +61,23 @@ def main(file, zip=False, save_path=os.getcwd()):
             with zipfile.ZipFile(zipname, 'w') as myzip:
                 for root, dirs, files in os.walk(file):
                     for file in files:
-                        g6_filename_arc = os.path.splitext(file)[0]+'.g6'
-                        g6_filename = os.path.normpath(os.path.join(save_path, root, g6_filename_arc))
-                        with open(g6_filename, 'wb') as g6_file:
-                            _convert(f, g6_file)
-                            myzip.write(g6_filename, g6_filename_arc)
-                        os.remove(g6_filename)
+                        cub_filename = os.path.normpath(os.path.join(root, file))
+                        with open(cub_filename) as cub_file:
+                            g6_filename_arc = os.path.splitext(file)[0]+'.g6'
+                            g6_filename = os.path.normpath(os.path.join(save_path, root, g6_filename_arc))
+                            with open(g6_filename, 'wb') as g6_file:
+                                _convert(cub_file, g6_file)
+                                myzip.write(g6_filename, g6_filename_arc)
+                            os.remove(g6_filename)
         else:
             for root, dirs, files in os.walk(file):
                 for file in files:
-                    g6_filename_arc = os.path.splitext(file)[0]+'.g6'
-                    g6_filename = os.path.normpath(os.path.join(save_path, root, g6_filename_arc))
-                    g6_file = open(g6_filename, 'wb')
-                    _convert(f, g6_file)
+                    cub_filename = os.path.normpath(os.path.join(root, file))
+                    with open(cub_filename) as cub_file:
+                        g6_filename_arc = os.path.splitext(file)[0]+'.g6'
+                        g6_filename = os.path.normpath(os.path.join(save_path, root, g6_filename_arc))
+                        g6_file = open(g6_filename, 'wb')
+                        _convert(cub_file, g6_file)
         
     # or a lone CUB file
     else:
