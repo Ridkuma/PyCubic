@@ -9,7 +9,8 @@ import re, os, sys, tempfile, subprocess, zlib, zipfile
 def _convert(g6_file, cub_file):
     """Convert a G6 Python File Object and write to a CUB Python File Object"""
     
-    string = g6_file.readline()
+    g6_file.readline()
+    print g6_file.name
 
     # Run showg and store output in a tempFile file
     tempFile = tempfile.NamedTemporaryFile()
@@ -57,7 +58,7 @@ def main(file, save_path=os.getcwd()):
         if zipfile.is_zipfile(f):
             with zipfile.ZipFile(f) as myzip:
                 # Convert every G6 in the zip
-                zipname = os.path.splitext(file)[0]
+                zipname = os.path.basename(os.path.splitext(file)[0])
                 for filename in myzip.namelist():
                     # Treat only files and skip folders themselves
                     if not filename.endswith('/'):
@@ -70,7 +71,7 @@ def main(file, save_path=os.getcwd()):
                         if not os.path.isdir(directory):
                             os.makedirs(directory)
                         # Create empty CUB file and fill it
-                        cub_filename = os.path.join(directory, os.path.splitext(file)[0]+'.cub')
+                        cub_filename = os.path.join(directory, os.path.splitext(filename)[0]+'.cub')
                         with open(cub_filename, 'wb') as cub_file:
                             with myzip.open(filename, 'rU') as g6_file:
                                 _convert(g6_file, cub_file)

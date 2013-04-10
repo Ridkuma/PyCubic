@@ -7,10 +7,10 @@
 import subprocess, tempfile, os, sys, zlib, zipfile
 
 
-def _convert(g6_file, cub_file):
+def _convert(cub_file, g6_file):
     """Convert a CUB Python File Object and write to a G6 Python File Object"""
     # Get number of vertices and degree
-    n = int(g6_file.readline())
+    n = int(cub_file.readline())
 
     """ dreadnaut commands generation """
 
@@ -19,7 +19,7 @@ def _convert(g6_file, cub_file):
 
     # Parse the .cub file and generates commands for each line
     s = ""
-    for line in g6_file :
+    for line in cub_file :
         set = line.split()
         for v in set[1:4] :
             s += " "+ v
@@ -36,8 +36,8 @@ def _convert(g6_file, cub_file):
 
     """ dreadnaut to G6 conversion """
     # Works on Unix, TODO : Adapt for Windows
-    subprocess.call("\"" +  os.getcwd() + "/\"" + "dretog " + temp.name + 
-                    " \"" +  os.getcwd() + "/\"" + cub_file.name, shell = True)
+    subprocess.call("\"" +  os.getcwd() + "/\"" + "dretog " + temp.name + " \"" + 
+                    g6_file.name + "\" ", shell = True)
 
     temp.close()
 
