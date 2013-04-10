@@ -73,9 +73,10 @@ def main(file, save_path=os.getcwd()):
                         # Create empty CUB file and fill it
                         cub_filename = os.path.join(directory, os.path.splitext(filename)[0]+'.cub')
                         with open(cub_filename, 'wb') as cub_file:
-                            with myzip.open(filename, 'rU') as g6_file:
+                            myzip.extract(filename)
+                            with open(filename, 'rU') as g6_file:
                                 _convert(g6_file, cub_file)
-                            
+                            os.remove(filename)
         # or a lone G6 file
         else:
             cub_filename = os.path.normpath(os.path.join(save_path, os.path.splitext(file)[0]+'.cub'))
