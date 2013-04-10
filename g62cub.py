@@ -60,9 +60,10 @@ def main(file, save_path=os.getcwd()):
                 # Convert every G6 in the zip
                 zipname = os.path.basename(os.path.splitext(file)[0])
                 for filename in myzip.namelist():
-                    # Treat only files and skip folders themselves
-                    if not filename.endswith('/'):
-                        root, name = os.path.split(filename)
+                    # Treat only files with .g6 extensions
+                    (name, ext) = os.path.splitext(filename)
+                    if '.g6' in ext:
+                        root, basename = os.path.split(filename)
                         # When subfolder is same name as archive, suppress it
                         if root == zipname:
                             root = ''
@@ -71,17 +72,22 @@ def main(file, save_path=os.getcwd()):
                         if not os.path.isdir(directory):
                             os.makedirs(directory)
                         # Create empty CUB file and fill it
-                        cub_filename = os.path.join(directory, os.path.splitext(filename)[0]+'.cub')
+                        cub_filename = os.path.join(directory, name+'.cub')
                         with open(cub_filename, 'wb') as cub_file:
                             myzip.extract(filename)
                             with open(filename, 'rU') as g6_file:
                                 _convert(g6_file, cub_file)
                             os.remove(filename)
+                            
         # or a lone G6 file
         else:
-            cub_filename = os.path.normpath(os.path.join(save_path, os.path.splitext(file)[0]+'.cub'))
-            with open(cub_filename, 'wb') as cub_file:
-                _convert(f, cub_file)
+            (name, ext) = os.path.splitext(file)
+            if '.g6' in ext:
+                cub_filename = os.path.normpath(os.path.join(save_path, name+'.cub'))
+                with open(cub_filename, 'wb') as cub_file:
+                    _convert(f, cub_file)
+            else:
+                print '{} must have a .g6 extension to be converted'.format(file)
 
 
 # If script is called via command line, exec main with each argument if any,
@@ -95,8 +101,8 @@ if __name__ == "__main__":
     elif args == 2:
         main(sys.argv[1])
     else:
-        print("""Usage: g62cub FILE [FILE]... [DEST]
+        print """Usage: g62cub FILE [FILE]... [DEST]
 FILE can either be a G6 file or a ZIP containing G6 files.
 DEST, if present, specifies the path where to save the converted file(s).
 
-Beware, DEST must be present if there are multiple FILE.""")
+Beware, DEST must be present if there are multiple FILE."""

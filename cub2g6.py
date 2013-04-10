@@ -61,39 +61,46 @@ def main(file, zip=False, save_path=os.getcwd()):
             with zipfile.ZipFile(zipname, 'w') as myzip:
                 for root, dirs, files in os.walk(file):
                     for file in files:
+                        (name, ext) = os.path.splitext(file)
+                        if '.cub' in ext:
+                            cub_filename = os.path.normpath(os.path.join(root, file))
+                            with open(cub_filename) as cub_file:
+                                g6_filename_arc = os.path.join(root, os.path.splitext(file)[0]+'.g6')
+                                g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
+                                with open(g6_filename, 'wb') as g6_file:
+                                    _convert(cub_file, g6_file)
+                                    myzip.write(g6_filename, g6_filename_arc)
+                                os.remove(g6_filename)
+        else:
+            for root, dirs, files in os.walk(file):
+                for file in files:
+                    (name, ext) = os.path.splitext(file)
+                    if '.cub' in ext:
                         cub_filename = os.path.normpath(os.path.join(root, file))
                         with open(cub_filename) as cub_file:
                             g6_filename_arc = os.path.join(root, os.path.splitext(file)[0]+'.g6')
                             g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
-                            with open(g6_filename, 'wb') as g6_file:
-                                _convert(cub_file, g6_file)
-                                myzip.write(g6_filename, g6_filename_arc)
-                            os.remove(g6_filename)
-        else:
-            for root, dirs, files in os.walk(file):
-                for file in files:
-                    cub_filename = os.path.normpath(os.path.join(root, file))
-                    with open(cub_filename) as cub_file:
-                        g6_filename_arc = os.path.join(root, os.path.splitext(file)[0]+'.g6')
-                        g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
-                        g6_file = open(g6_filename, 'wb')
-                        _convert(cub_file, g6_file)
+                            g6_file = open(g6_filename, 'wb')
+                            _convert(cub_file, g6_file)
         
     # or a lone CUB file
     else:
-        with open(file) as f:
-            g6_filename_arc = os.path.splitext(file)[0]+'.g6'
-            g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
-            if zip:
-                with zipfile.ZipFile(zipname, 'w') as myzip:
-                    with open(g6_filename, 'wb') as g6_file:
-                        _convert(f, g6_file)
-                        myzip.write(g6_filename, g6_filename_arc)
-                    os.remove(g6_filename)
-            else:
-                g6_file = open(g6_filename, 'wb')
-                _convert(f, g6_file)
-
+        (name, ext) = os.path.splitext(file)
+        if '.cub' in ext:
+            with open(file) as f:
+                g6_filename_arc = os.path.splitext(file)[0]+'.g6'
+                g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
+                if zip:
+                    with zipfile.ZipFile(zipname, 'w') as myzip:
+                        with open(g6_filename, 'wb') as g6_file:
+                            _convert(f, g6_file)
+                            myzip.write(g6_filename, g6_filename_arc)
+                        os.remove(g6_filename)
+                else:
+                    g6_file = open(g6_filename, 'wb')
+                    _convert(f, g6_file)
+        else:
+            print '{} must have a .cub extension to be converted'.format(file)
 
 # If script is called via command line, exec main with each argument if any,
 # or print usage
