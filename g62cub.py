@@ -7,7 +7,7 @@
 import re, os, sys, tempfile, subprocess, zlib, zipfile
 
 def _convert(g6_file, cub_file):
-    """Convert a G6 Python File Object and writes to a CUB Python File Object"""
+    """Convert a G6 Python File Object and write to a CUB Python File Object"""
     
     string = g6_file.readline()
 
@@ -42,13 +42,13 @@ def _convert(g6_file, cub_file):
     cub_file.flush()
 
     tempFile.close()
-    cub_file.close()
 
-def main(file, basepath=os.getcwd()):
+
+def main(file, save_path=os.getcwd()):
     """Convert a G6 file or zipped G6 files to CUB file(s)
     Arguments:
-    file -- filename of the file to convert
-    basepath -- where to save the CUB files, defaults to current working directory
+    file (string) -- filename of the file to convert
+    save_path (string) -- where to save the CUB files, defaults to current working directory
     
     """
     
@@ -65,28 +65,36 @@ def main(file, basepath=os.getcwd()):
                         # When subfolder is same name as archive, suppress it
                         if root == zipname:
                             root = ''
-                        directory = os.path.normpath(os.path.join(basepath, zipname, root))
+                        directory = os.path.normpath(os.path.join(save_path, zipname, root))
                         # Make subfolder if it does not exist
                         if not os.path.isdir(directory):
                             os.makedirs(directory)
                         # Create empty CUB file and fill it
                         cub_filename = os.path.join(directory, os.path.splitext(file)[0]+'.cub')
-                        cub_file = open(cub_filename, 'wb')
-                        with myzip.open(filename, 'rU') as g6_file:
-                            _convert(g6_file, cub_file)
+                        with open(cub_filename, 'wb') as cub_file:
+                            with myzip.open(filename, 'rU') as g6_file:
+                                _convert(g6_file, cub_file)
                             
         # or a lone G6 file
         else:
-            cub_filename = os.path.normpath(os.path.join(basepath, os.path.splitext(file)[0]+'.cub'))
-            cub_file = open(cub_filename, 'wb')
-            _convert(f, cub_file)
-    
+            cub_filename = os.path.normpath(os.path.join(save_path, os.path.splitext(file)[0]+'.cub'))
+            with open(cub_filename, 'wb') as cub_file:
+                _convert(f, cub_file)
+
+
 # If script is called via command line, exec main with each argument if any,
 # or print usage
 if __name__ == "__main__":
-    if len(sys.argv) >= 2:
-        for argv in sys.argv:
-            main(sys.argv[1])
+    args = len(sys.argv)
+    if args > 2:
+        dest = sys.argv[-1]
+        for argv in sys.argv[1:-1]:
+            main(argv, dest)
+    elif args == 2:
+        main(sys.argv[1])
     else:
-        print("""Usage: g62cub FILE [FILE]...
-FILE can either be a G6 file or a ZIP containing G6 files""")
+        print("""Usage: g62cub FILE [FILE]... [DEST]
+FILE can either be a G6 file or a ZIP containing G6 files.
+DEST, if present, specifies the path where to save the converted file(s).
+
+Beware, DEST must be present if there are multiple FILE.""")
