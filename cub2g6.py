@@ -63,8 +63,8 @@ def main(file, zip=False, save_path=os.getcwd()):
                     for file in files:
                         cub_filename = os.path.normpath(os.path.join(root, file))
                         with open(cub_filename) as cub_file:
-                            g6_filename_arc = os.path.splitext(file)[0]+'.g6'
-                            g6_filename = os.path.normpath(os.path.join(save_path, root, g6_filename_arc))
+                            g6_filename_arc = os.path.join(root, os.path.splitext(file)[0]+'.g6')
+                            g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
                             with open(g6_filename, 'wb') as g6_file:
                                 _convert(cub_file, g6_file)
                                 myzip.write(g6_filename, g6_filename_arc)
@@ -74,8 +74,8 @@ def main(file, zip=False, save_path=os.getcwd()):
                 for file in files:
                     cub_filename = os.path.normpath(os.path.join(root, file))
                     with open(cub_filename) as cub_file:
-                        g6_filename_arc = os.path.splitext(file)[0]+'.g6'
-                        g6_filename = os.path.normpath(os.path.join(save_path, root, g6_filename_arc))
+                        g6_filename_arc = os.path.join(root, os.path.splitext(file)[0]+'.g6')
+                        g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
                         g6_file = open(g6_filename, 'wb')
                         _convert(cub_file, g6_file)
         
