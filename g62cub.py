@@ -10,7 +10,6 @@ def _convert(g6_file, cub_file):
     """Convert a G6 Python File Object and write to a CUB Python File Object"""
     
     g6_file.readline()
-    print g6_file.name
 
     # Run showg and store output in a tempFile file
     tempFile = tempfile.NamedTemporaryFile()
@@ -34,7 +33,7 @@ def _convert(g6_file, cub_file):
         graphSets.insert(int(node), edges)
         
     # Generate the .cub file
-    cub_file.write(str(order) + "\t" + "3 \n")
+    cub_file.write(str(order) + "\n")
     for i in range(0, order) :
         cub_file.write(str(i) + "\t")
         edges = "\t".join(graphSets[i])

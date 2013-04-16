@@ -12,7 +12,7 @@ def _convert(cub_file, g6_file):
     # Get number of vertices and degree
     n = int(cub_file.readline())
 
-    """ dreadnaut commands generation """
+    # dreadnaut commands generation
 
     # Header, only consists in declaring the number of vertices
     header = "n=" + str(n) + '\n'
@@ -28,13 +28,13 @@ def _convert(cub_file, g6_file):
     # Create the final dreadnaut command string
     command = header + s[1:len(s)-2] + '.'
 
-    """ dreadnaut temp file creation """
+    # dreadnaut temp file creation 
 
     temp = tempfile.NamedTemporaryFile()
     temp.write(command)
     temp.flush()
 
-    """ dreadnaut to G6 conversion """
+    # dreadnaut to G6 conversion
     # Works on Unix, TODO : Adapt for Windows
     subprocess.call("\"" +  os.getcwd() + "/\"" + "dretog " + temp.name + " \"" + 
                     g6_file.name + "\" ", shell = True)
@@ -53,7 +53,7 @@ def main(file, zip=False, save_path=os.getcwd()):
     """
     
     if zip:
-        zipname = os.path.normpath(os.path.join(save_path, os.path.splitext(file)[0]+'.zip'))
+        zipname = os.path.normpath(os.path.join(save_path, os.path.normpath(file)+'.zip'))
     
     # Test if we have a folder
     if os.path.isdir(file):
@@ -114,8 +114,7 @@ if __name__ == "__main__":
     if args >= 3:
         if '-z' in sys.argv[1]:
             if args == 3:
-                for argv in sys.argv[2:]:
-                    main(argv, True)
+                main(sys.argv[2], True)
             else:
                 dest = sys.argv[-1]
                 for argv in sys.argv[2:-1]:
@@ -123,7 +122,7 @@ if __name__ == "__main__":
         else:
             dest = sys.argv[-1]
             for argv in sys.argv[1:-1]:
-                main(argv, dest)
+                main(argv, save_path=dest)
     elif args == 2:
         main(sys.argv[1])
     else:
