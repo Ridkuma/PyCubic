@@ -4,7 +4,7 @@
 
 """
 
-import re, os, sys, tempfile, subprocess, zlib, zipfile
+import re, os, sys, tempfile, subprocess, zlib, zipfile, logging
 
 def _convert(g6_file, cub_file):
     """Convert a G6 Python File Object and write to a CUB Python File Object"""
@@ -73,19 +73,26 @@ def main(file, save_path=os.getcwd()):
                             os.makedirs(directory)
                         # Create empty CUB file and fill it
                         cub_filename = os.path.join(directory, name+'.cub')
-                        with open(cub_filename, 'wb') as cub_file:
-                            myzip.extract(filename)
-                            with open(filename, 'rU') as g6_file:
-                                _convert(g6_file, cub_file)
-                            os.remove(filename)
-                            
+                        try:
+                            with open(cub_filename, 'wb') as cub_file:
+                                myzip.extract(filename)
+                                with open(filename, 'rU') as g6_file:
+                                    _convert(g6_file, cub_file)
+                                os.remove(filename)
+                        except Exception as e:
+                            logging.exception("Error while converting {}".format(cub_filename))
+                            os.remove(cub_filename)
         # or a lone G6 file
         else:
             (name, ext) = os.path.splitext(file)
             if '.g6' in ext:
                 cub_filename = os.path.normpath(os.path.join(save_path, name+'.cub'))
-                with open(cub_filename, 'wb') as cub_file:
-                    _convert(f, cub_file)
+                try:
+                    with open(cub_filename, 'wb') as cub_file:
+                        _convert(f, cub_file)
+                except Exception as e:
+                    logging.exception("Error while converting {}".format(cub_filename))
+                    os.remove(cub_filename)
             else:
                 print '{} must have a .g6 extension to be converted'.format(file)
 
