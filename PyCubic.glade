@@ -17,7 +17,7 @@
     <property name="can_focus">False</property>
     <property name="border_width">6</property>
     <property name="title" translatable="yes">PyCubic</property>
-    <signal name="notify" handler="gtk_main_quit" swapped="no"/>
+    <signal name="delete-event" handler="onDeleteWindow" swapped="no"/>
     <child>
       <object class="GtkBox" id="mainVbox">
         <property name="visible">True</property>
@@ -221,10 +221,6 @@
                   <object class="GtkTreeView" id="graph_properties">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="model">liststore1</property>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="treeview-selection1"/>
-                    </child>
                   </object>
                 </child>
               </object>
@@ -242,6 +238,8 @@
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkFrame" id="graph_frame">
+                    <property name="width_request">500</property>
+                    <property name="height_request">401</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="label_xalign">0</property>
@@ -279,7 +277,7 @@
                     <property name="homogeneous">True</property>
                     <property name="layout_style">start</property>
                     <child>
-                      <object class="GtkButton" id="color_node">
+                      <object class="GtkButton" id="color_node_button">
                         <property name="label">gtk-select-color</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -293,7 +291,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="edit_node">
+                      <object class="GtkButton" id="edit_node_button">
                         <property name="label">gtk-edit</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -307,7 +305,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="delete_node">
+                      <object class="GtkButton" id="delete_node_button">
                         <property name="label">gtk-delete</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -321,12 +319,13 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="button1">
+                      <object class="GtkButton" id="help_button">
                         <property name="label">gtk-help</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="use_stock">True</property>
+                        <signal name="clicked" handler="on_help_button_clicked" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -383,5 +382,4 @@
       </object>
     </child>
   </object>
-  <object class="GtkListStore" id="liststore1"/>
 </interface>
