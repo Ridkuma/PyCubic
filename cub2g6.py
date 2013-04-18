@@ -9,7 +9,7 @@ import subprocess, tempfile, os, sys, zlib, zipfile, logging
 
 def _convert(cub_file, g6_file):
     """Convert a CUB Python File Object and write to a G6 Python File Object"""
-    # Get number of vertices and degree
+    # Get number of vertices
     n = int(cub_file.readline())
 
     # dreadnaut commands generation

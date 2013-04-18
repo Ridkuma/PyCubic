@@ -9,7 +9,7 @@ import subprocess, tempfile, os, sys, logging
 
 def _convert(cub_file, graphml_file):
     """Convert a CUB Python File Object and write to a GraphML Python File Object"""
-    # Get number of vertices and degree
+    # Get number of vertices
     n = int(cub_file.readline())
 
     graphml = """<?xml version="1.0" encoding="UTF-8"?>
