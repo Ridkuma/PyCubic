@@ -26,6 +26,7 @@ def _convert(cub_file):
     
     for start_node, edges in graph_dict.iteritems():
         for end_node in edges:
+            graph_dict[end_node].remove(start_node)
             graph.add_edge(graph.vertex(start_node), graph.vertex(end_node))
          
     return graph

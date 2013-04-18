@@ -3,6 +3,7 @@
 
 from gi.repository import Gtk 
 from graph_tool.all import *
+import cub2graph
 
 
 class PyCubic:
@@ -49,7 +50,10 @@ class HelpWindow(Gtk.MessageDialog):
         
     def destroy(self, *args):
         for widget in args:
-            Gtk.Widget.destroy(widget)
+            try: 
+                Gtk.Widget.destroy(widget)
+            except:
+                pass
         
         
 class Handler:
@@ -63,18 +67,9 @@ class Handler:
     
 
 
-g = Graph(directed = False)
-v1 = g.add_vertex()
-v2 = g.add_vertex()
-v3 = g.add_vertex()
-v4 = g.add_vertex()
-v5 = g.add_vertex()
+with open("Coxeter.cub") as file :
+    g = cub2graph._convert(file)
 
-e1 = g.add_edge(v1, v2)
-e2 = g.add_edge(v3, v4)
-e3 = g.add_edge(v1, v4)
-
-
-instance = PyCubic()
-instance.displayGraph(g)
-Gtk.main()
+    instance = PyCubic()
+    instance.displayGraph(g)
+    Gtk.main()
