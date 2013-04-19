@@ -14,7 +14,7 @@ def _convert(g6_file, cub_file):
     # Run showg and store output in a tempFile file
     tempFile = tempfile.NamedTemporaryFile()
     tempFile.readline()
-    subprocess.call("\"" +  os.getcwd() + "/\"" + "showg " + "\"" + 
+    subprocess.call("showg " + "\"" + 
                     g6_file.name + "\" " + tempFile.name, shell = True)
 
     # Look for the order of the graph in the file
@@ -66,7 +66,7 @@ def main(file, save_path=os.getcwd()):
                         # When subfolder is same name as archive, suppress it
                         if root == zipname:
                             root = ''
-                        directory = os.path.normpath(os.path.join(save_path, zipname, root))
+                        directory = os.path.normpath(os.path.join(save_path, root))
                         # Make subfolder if it does not exist
                         if not os.path.isdir(directory):
                             os.makedirs(directory)

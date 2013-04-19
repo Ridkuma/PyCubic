@@ -36,7 +36,7 @@ def _convert(cub_file, g6_file):
 
     # dreadnaut to G6 conversion
     # Works on Unix, TODO : Adapt for Windows
-    subprocess.call("\"" +  os.getcwd() + "/\"" + "dretog " + temp.name + " \"" + 
+    subprocess.call("dretog " + temp.name + " \"" + 
                     g6_file.name + "\" ", shell = True)
 
     temp.close()
@@ -60,6 +60,8 @@ def main(file, zip=False, save_path=os.getcwd()):
         if zip:
             try:
                 root_file = file
+                if not os.path.exists(os.path.split(zipname)[0]):
+                    os.makedirs(os.path.split(zipname)[0])
                 with zipfile.ZipFile(zipname, 'w') as myzip:
                     for root, dirs, files in os.walk(root_file):
                         for file in files:
@@ -69,29 +71,44 @@ def main(file, zip=False, save_path=os.getcwd()):
                                 with open(cub_filename) as cub_file:
                                     g6_filename_arc = os.path.join(root.replace(root_file, '').lstrip('/'), name+'.g6')
                                     g6_filename = os.path.normpath(os.path.join(save_path, root_file, g6_filename_arc))
+                                    dest_directory = os.path.split(g6_filename)[0]
+                                    if not os.path.exists(dest_directory):
+                                        os.makedirs(dest_directory)
                                     with open(g6_filename, 'wb') as g6_file:
                                         _convert(cub_file, g6_file)
                                         myzip.write(g6_filename, g6_filename_arc)
                                     os.remove(g6_filename)
+                                    try:
+                                        os.removedirs(dest_directory)
+                                    except:
+                                        pass
             except Exception as e:
                 logging.exception("Error while converting {}".format(zipname))
                 os.remove(zipname)
+                try:
+                    os.removedirs(os.path.split(zipname)[0])
+                except:
+                    pass
         else:
+            root_file = file
             for root, dirs, files in os.walk(file):
                 for file in files:
                     (name, ext) = os.path.splitext(file)
                     if '.cub' in ext:
                         cub_filename = os.path.normpath(os.path.join(root, file))
                         with open(cub_filename) as cub_file:
-                            g6_filename_arc = os.path.join(root, os.path.splitext(file)[0]+'.g6')
+                            g6_filename_arc = os.path.join(root.replace(root_file, '').lstrip('/'), os.path.splitext(file)[0]+'.g6')
                             g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
+                            dest_directory = os.path.split(g6_filename)[0]
+                            if not os.path.exists(dest_directory):
+                                os.makedirs(dest_directory)
                             try:
                                 with open(g6_filename, 'wb') as g6_file:
                                     _convert(cub_file, g6_file)
                             except Exception as e:
                                 logging.exception("Error while converting {}".format(g6_filename))
                                 os.remove(g6_filename)
-                            
+                                                        
     # or a lone CUB file
     else:
         (name, ext) = os.path.splitext(file)
@@ -124,7 +141,7 @@ if __name__ == "__main__":
             dest = sys.argv[-1]
             for argv in sys.argv[1:-1]:
                 main(argv, save_path=dest)
-    elif args == 2:
+    elif args == 2 and not '-z' in sys.argv[1]:
         main(sys.argv[1])
     else:
         print("""Usage: cub2g6 FILE [FILE]... [DEST]

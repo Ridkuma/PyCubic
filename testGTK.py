@@ -3,7 +3,7 @@
 
 from gi.repository import Gtk 
 from graph_tool.all import *
-import cub2graph
+import cub2graph, sys
 
 
 class PyCubic:
@@ -67,7 +67,7 @@ class Handler:
     
 
 
-with open("Coxeter.cub") as file :
+with open(sys.argv[1]) as file :
     g = cub2graph._convert(file)
 
     instance = PyCubic()
