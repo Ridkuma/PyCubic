@@ -53,21 +53,22 @@ def main(file, zip=False, save_path=os.getcwd()):
     """
     
     if zip:
-        zipname = os.path.normpath(os.path.join(save_path, os.path.normpath(file)+'.zip'))
+        zipname = os.path.normpath(os.path.join(save_path, os.path.basename(file)+'.zip'))
     
     # Test if we have a folder
     if os.path.isdir(file):
         if zip:
             try:
+                root_file = file
                 with zipfile.ZipFile(zipname, 'w') as myzip:
-                    for root, dirs, files in os.walk(file):
+                    for root, dirs, files in os.walk(root_file):
                         for file in files:
                             (name, ext) = os.path.splitext(file)
                             if '.cub' in ext:
                                 cub_filename = os.path.normpath(os.path.join(root, file))
                                 with open(cub_filename) as cub_file:
-                                    g6_filename_arc = os.path.join(root, name+'.g6')
-                                    g6_filename = os.path.normpath(os.path.join(save_path, g6_filename_arc))
+                                    g6_filename_arc = os.path.join(root.replace(root_file, '').lstrip('/'), name+'.g6')
+                                    g6_filename = os.path.normpath(os.path.join(save_path, root_file, g6_filename_arc))
                                     with open(g6_filename, 'wb') as g6_file:
                                         _convert(cub_file, g6_file)
                                         myzip.write(g6_filename, g6_filename_arc)
