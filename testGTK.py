@@ -13,7 +13,7 @@ class PyCubic:
         self.builder = Gtk.Builder()
         self.builder.add_from_file("PyCubic.glade")
         self.graphFrame = self.builder.get_object("graph_frame")
-        self.builder.connect_signals(Handler())
+        self.builder.connect_signals(Handler(self.builder))
         
     # Add the GraphWidget to display graph g
     def displayGraph(self, g):
@@ -47,17 +47,18 @@ class HelpWindow(Gtk.MessageDialog):
         
         self.dialog.show_all()
         self.dialog.connect("response", self.destroy)
-        
-    def destroy(self, *args):
-        for widget in args:
-            try: 
-                Gtk.Widget.destroy(widget)
-            except:
-                pass
+    
+     
+    def destroy(self, widget, *args):
+        Gtk.Widget.hide(widget)
         
         
 class Handler:
 
+    def __init__(self, builder) :
+        self.builder = builder
+
+    # Main window delete handler
     def onDeleteWindow(self, *windows):
         Gtk.main_quit(*windows)
 
@@ -65,6 +66,15 @@ class Handler:
     def on_help_button_clicked(self, helpButton):
         self.helpWindow = HelpWindow()
     
+    # Quit Menu Item click handler
+    def on_quit_menu_activate(self, menuItem):
+        Gtk.main_quit(menuItem)
+        
+    # About Menu Item click handler
+    def on_about_menu_activate(self, menuItem):
+        self.aboutdialog = self.builder.get_object("about_dialog")
+        self.aboutdialog.run()
+        self.aboutdialog.hide()
 
 
 with open(sys.argv[1]) as file :
