@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #-*- coding:utf-8 -*-
 
-from gi.repository import Gtk 
+from gi.repository import Gtk, Gdk
 from graph_tool.all import *
 import cub2graph, sys
 
@@ -13,14 +13,42 @@ class PyCubic:
         self.builder = Gtk.Builder()
         self.builder.add_from_file("PyCubic.glade")
         self.graphFrame = self.builder.get_object("graph_frame")
-        self.builder.connect_signals(Handler(self.builder, self.graphWidget))
         
     # Add the GraphWidget to display graph g
     def displayGraph(self, g):
         layout = graph_tool.draw.sfdp_layout(g)
-        self.graphWidget = graph_tool.draw.GraphWidget(g, layout)
+        self.graphWidget = GraphWidgetCustom(g, layout)
         self.graphWidget.show_all()
         self.graphFrame.add(self.graphWidget)
+        
+class GraphWidgetCustom(graph_tool.draw.GraphWidget):
+
+    def __init__(self, g, layout) :
+        super(GraphWidgetCustom, self).__init__(g, layout)
+        self.theta = False
+        self.thetaMinus = False
+        self.firstPick = None
+        self.secondPick = None
+    
+    def button_press_event(self, widget, event):
+        if self.theta == True :
+            print "Theta"
+            self.graphWidget.init_picked()
+            self.graphWidget.queue.draw()
+            if self.firstPick == None :
+                self.firstPick = self.graphWidget.picked
+            elif self.secondPick == None :
+                self.secondPick = self.graphWidget.picked
+            else :
+                print "Pouet"
+                # TODO apply THETA operation, we have our two vertices
+                self.theta = False
+                
+        elif self.thetaMinus == True :
+            print "ThetaMinus"
+            
+        else : 
+            super(self, widget, event)
 
 
 class HelpWindow(Gtk.MessageDialog):
@@ -65,13 +93,16 @@ class Handler:
         
     # Theta button click handler
     def on_theta_button_clicked(self, button):
-        theta = ThetaHandler(self.graphWidget)
-        self.graphWidget.connect("button_pressed_event", theta.thetabutton_pressed_event)
+        print "Theta button clicked"
+        # TODO Desactivate Theta operations buttons
+        # TODO Update the Status bar
+        self.graphWidget.theta = True
         
     # ThetaMinus button click handler
     def on_thetaMinus_button_clicked(self, button):
+        print "Theta Minus button clicked"
         theta = ThetaHandler(self.graphWidget)
-        self.graphWidget.connect("button_pressed_event", theta.thetaMinusbutton_pressed_event)
+        self.graphWidget.connect("button_press_event", theta.thetaMinusbutton_pressed_event)
 
     # Help button click handler
     def on_help_button_clicked(self, button):
@@ -86,40 +117,6 @@ class Handler:
         self.aboutdialog = self.builder.get_object("about_dialog")
         self.aboutdialog.run()
         self.aboutdialog.hide()
-        
-        
-class ThetaHandler:
-
-    def __init__(self, graphWidget):
-        self.graphWidget = graphWidget
-        self.firstPick = None
-        self.secondPick = None
-
-    # GraphWidget click handler while Theta Operation
-    def thetabutton_pressed_event(self, widget, event):
-        if event.button == 1 : # and not event.state & Gdk.ModifierType.CONTROL_MASK :  # TODO Dafuq is la deuxième condition ?
-            if self.graphWidget.picked == False :
-                self.graphWidget.init_picked()
-                self.graphWidget.queue.draw()
-                if self.firstPick == None :
-                    self.firstPick = self.graphWidget.picked
-                elif self.secondPick == None :
-                    self.secondPick = self.graphWidget.picked
-                else :
-                # TODO apply THETA operation, we have our two vertices
-                
-    
-        # Restore to original behaviour
-        self.graphWidget.connect("button_pressed_event", graphWidget.button_pressed_event)
-        
-    
-    # GraphWidget click handler while ThetaMinus Operation
-    def thetaMinusbutton_pressed_event(self, widget, event):
-    
-        # Restore to original behaviour
-        self.graphWidget.connect("button_pressed_event", graphWidget.button_pressed_event)
-    
-
 
 
 with open(sys.argv[1]) as file :
@@ -127,4 +124,5 @@ with open(sys.argv[1]) as file :
 
     instance = PyCubic()
     instance.displayGraph(g)
+    instance.builder.connect_signals(Handler(instance.builder, instance.graphWidget))
     Gtk.main()
