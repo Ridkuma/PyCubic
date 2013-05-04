@@ -4,15 +4,19 @@
   <object class="GtkAboutDialog" id="about_dialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">About PyCubic</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">PyCubic</property>
     <property name="version">V1.0</property>
-    <property name="copyright" translatable="yes">Copyright © 2013 Nicolas Busseneau, Gwenegan Hudin</property>
+    <property name="copyright" translatable="yes">Copyright © 2013 Nicolas Busseneau, Gwenegan Hudin
+Python-graph-tool library by Tiego de Paula Peixoto
+Nauty and Traces libraries by Brendan McKay and Adolfo Piperno</property>
     <property name="comments" translatable="yes">A cubic graphs manipulator.</property>
     <property name="authors">BUSSENEAU Nicolas
 HUDIN Gwenegan</property>
     <property name="logo">PyCubicIcon.png</property>
+    <property name="license_type">gpl-3-0</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="aboutdialog-vbox1">
         <property name="can_focus">False</property>
