@@ -15,11 +15,16 @@ class PyCubic:
         self.graphFrame = self.builder.get_object("graph_frame")
         
     # Add the GraphWidget to display graph g
-    def displayGraph(self, g):
+    def display_graph(self, g):
         layout = sfdp_layout(g)
         self.graphWidget = GraphWidgetCustom(self, g, layout)
         self.graphWidget.show_all()
         self.graphFrame.add(self.graphWidget)
+        
+    # Clear the current graph
+    def clear_graph(self) :
+        self.graphWidget.destroy()
+        self.graphWidget = None
         
     # Set a widget to sensitive
     def activate_widget(self, widgetName) :
@@ -88,6 +93,15 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
     def reactivate_operations(self):
         self.instance.activate_widget("theta_button")
         self.instance.activate_widget("thetaMinus_button")
+        self.instance.deactivate_widget("cancel_button")
+        
+    # Cancel all current operations
+    def cancel_operations(self):
+        self.reactivate_operations()
+        self.theta = False
+        self.thetaMinus = False
+        self.firstPick = None
+        self.secondPick = None
             
     # Dynamically change the graph layout with various algorithms
     def change_default_layout(self, algo) :
@@ -150,6 +164,7 @@ class Handler:
         print "Theta button clicked"
         self.builder.get_object("theta_button").set_sensitive(False)
         self.builder.get_object("thetaMinus_button").set_sensitive(False)
+        self.builder.get_object("cancel_button").set_sensitive(True)
         # TODO Update the Status bar
         self.graphWidget.theta = True
         
@@ -160,6 +175,12 @@ class Handler:
         self.builder.get_object("thetaMinus_button").set_sensitive(False)
         # TODO Update the Status bar
         self.graphWidget.thetaMinus = True
+        
+    # Cancel button click handler
+    def on_cancel_button_clicked(self, button):
+        print "Cancel"
+        self.graphWidget.cancel_operations()
+        
 
     # Help button click handler
     def on_help_button_clicked(self, button):
@@ -198,6 +219,6 @@ with open(sys.argv[1]) as file :
     g = cub2graph._convert(file)
 
     instance = PyCubic()
-    instance.displayGraph(g)
+    instance.display_graph(g)
     instance.builder.connect_signals(Handler(instance.builder, instance.graphWidget))
     Gtk.main()
