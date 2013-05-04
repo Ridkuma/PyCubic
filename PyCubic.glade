@@ -12,6 +12,7 @@
     <property name="comments" translatable="yes">A cubic graphs manipulator.</property>
     <property name="authors">BUSSENEAU Nicolas
 HUDIN Gwenegan</property>
+    <property name="logo">PyCubicIcon.png</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="aboutdialog-vbox1">
         <property name="can_focus">False</property>
@@ -68,6 +69,7 @@ HUDIN Gwenegan</property>
     <property name="can_focus">False</property>
     <property name="border_width">6</property>
     <property name="title" translatable="yes">PyCubic</property>
+    <property name="icon">PyCubicIcon.png</property>
     <signal name="delete-event" handler="onDeleteWindow" swapped="no"/>
     <child>
       <object class="GtkBox" id="mainVbox">
