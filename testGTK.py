@@ -42,8 +42,8 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.instance = instance
         self.theta = False
         self.thetaMinus = False
-        self.firstVertex = None
-        self.secondVertex = None
+        self.firstPick = None
+        self.secondPick = None
         self.newVertex1 = None
         self.newVertex2 = None
     
@@ -58,18 +58,18 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
             self.init_picked()
             self.queue_draw()
             # Get first vertex picked
-            if self.firstVertex == None :
-                self.firstVertex = self.picked
+            if self.firstPick == None :
+                self.firstPick = self.g.vertex(self.picked)
                 self.picked = None
                 print "First Pick"
             # Get second vertex picked
-            elif self.secondVertex == None :
-                self.secondVertex = self.picked
+            elif self.secondPick == None :
+                self.secondPick = self.g.vertex(self.picked)
                 self.picked = None
                 print "Second Pick"
                 
                 # Check if the picked vertices are neighbours
-                edge = self.g.edge(self.firstVertex, self.secondVertex)
+                edge = self.g.edge(self.firstPick, self.secondPick)
                 if edge == None :
                     print "Incorrect edge selection"
                     self.cancel_operations()
@@ -77,20 +77,22 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     # Insert new vertex between picked vertices
                     newVertex = self.g.add_vertex()
                     print "Vertex added"
-                    self.g.add_edge(self.firstVertex, newVertex)
-                    self.g.add_edge(self.secondVertex, newVertex)
+                    self.g.add_edge(self.firstPick, newVertex)
+                    self.g.add_edge(self.secondPick, newVertex)
                     self.g.remove_edge(edge)
                     if self.newVertex1 == None :
                         # Stock the new vertex, and wait for the second edge pick
                         self.newVertex1 = newVertex
-                        self.firstVertex = None
-                        self.secondVertex = None
+                        self.firstPick = None
+                        self.secondPick = None
                     else :
-                        # Create the second new vertex, and finish the operation
+                        # Create the second new vertex
                         self.newVertex2 = newVertex
                         self.g.add_edge(self.newVertex1, self.newVertex2)
+                        # Update graph widget
                         self.reset_layout() # TODO Edit the layout instead of resetting
                         self.regenerate_surface()
+                        self.fit_to_window()
                         self.cancel_operations()
                         print "Fin Theta"
                 
@@ -98,8 +100,45 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         # Theta Minus operation handler
         elif self.thetaMinus == True :
             print "ThetaMinus"
-            self.thetaMinus = False
-            self.cancel_operations()
+            self.init_picked()
+            self.queue_draw()
+            # Get first vertex picked
+            if self.firstPick == None :
+                self.firstPick = self.g.vertex(self.picked)
+                self.picked = None
+                print "First Pick"
+            # Get second vertex picked
+            elif self.secondPick == None :
+                self.secondPick = self.g.vertex(self.picked)
+                self.picked = None
+                print "Second Pick"
+                
+                # Check if the picked vertices are neighbours
+                if self.g.edge(self.firstPick, self.secondPick) == None :
+                    print "Incorrect edge selection"
+                    self.cancel_operations()
+                else :
+                    # Create edges between neighbours
+                    neighbours = [self.g.vertex_index[v] for v in self.firstPick.all_neighbours()]
+                    neighbours.remove(int(self.secondPick))
+                    for n in neighbours :
+                        print n
+                    self.g.add_edge(neighbours[0], neighbours[1])
+                    neighbours = [self.g.vertex_index[v] for v in self.secondPick.all_neighbours()]
+                    neighbours.remove(int(self.firstPick))
+                    self.g.add_edge(neighbours[0], neighbours[1])
+                    # Remove all edges from picked vertices
+                    self.g.clear_vertex(self.firstPick)
+                    self.g.clear_vertex(self.secondPick)
+                    # Remove picked vertices
+                    self.g.remove_vertex(self.firstPick)
+                    self.g.remove_vertex(self.secondPick)
+                    # Update graph widget
+                    self.reset_layout() # TODO Edit the layout instead of resetting
+                    self.regenerate_surface()
+                    self.fit_to_window()
+                    self.cancel_operations()
+                    print "Fin ThetaMinus"
         
         # Default behaviour, inherited    
         else : 
@@ -116,8 +155,8 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.reactivate_operations()
         self.theta = False
         self.thetaMinus = False
-        self.firstVertex = None
-        self.secondVertex = None
+        self.firstPick = None
+        self.secondPick = None
         self.newVertex1 = None
         self.newVertex2 = None
             
@@ -191,6 +230,7 @@ class Handler:
         print "Theta Minus button clicked"
         self.builder.get_object("theta_button").set_sensitive(False)
         self.builder.get_object("thetaMinus_button").set_sensitive(False)
+        self.builder.get_object("cancel_button").set_sensitive(True)
         # TODO Update the Status bar
         self.graphWidget.thetaMinus = True
         
