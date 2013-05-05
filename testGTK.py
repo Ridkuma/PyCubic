@@ -42,8 +42,10 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.instance = instance
         self.theta = False
         self.thetaMinus = False
-        self.firstPick = None
-        self.secondPick = None
+        self.firstVertex = None
+        self.secondVertex = None
+        self.newVertex1 = None
+        self.newVertex2 = None
     
     # Custom Button Press Event, implementing Theta operations
     def button_press_event(self, widget, event):
@@ -55,35 +57,49 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
             print "Theta"
             self.init_picked()
             self.queue_draw()
-            if self.firstPick == None :
-                self.firstPick = self.picked
+            # Get first vertex picked
+            if self.firstVertex == None :
+                self.firstVertex = self.picked
                 self.picked = None
                 print "First Pick"
-            elif self.secondPick == None :
-                self.secondPick = self.picked
+            # Get second vertex picked
+            elif self.secondVertex == None :
+                self.secondVertex = self.picked
                 self.picked = None
                 print "Second Pick"
                 
-                print "Fin Theta"
-                
-                # TODO apply THETA operation, we have our two vertices
-                self.g.clear_vertex(self.firstPick)
-                self.g.clear_vertex(self.secondPick)
-                self.g.remove_vertex(self.firstPick, True)
-                self.g.remove_vertex(self.secondPick, True)
-                self.reset_layout()
-                self.regenerate_surface()
-                self.theta = False
-                self.firstPick = None
-                self.secondPick = None
-                self.reactivate_operations()
+                # Check if the picked vertices are neighbours
+                edge = self.g.edge(self.firstVertex, self.secondVertex)
+                if edge == None :
+                    print "Incorrect edge selection"
+                    self.cancel_operations()
+                else :
+                    # Insert new vertex between picked vertices
+                    newVertex = self.g.add_vertex()
+                    print "Vertex added"
+                    self.g.add_edge(self.firstVertex, newVertex)
+                    self.g.add_edge(self.secondVertex, newVertex)
+                    self.g.remove_edge(edge)
+                    if self.newVertex1 == None :
+                        # Stock the new vertex, and wait for the second edge pick
+                        self.newVertex1 = newVertex
+                        self.firstVertex = None
+                        self.secondVertex = None
+                    else :
+                        # Create the second new vertex, and finish the operation
+                        self.newVertex2 = newVertex
+                        self.g.add_edge(self.newVertex1, self.newVertex2)
+                        self.reset_layout() # TODO Edit the layout instead of resetting
+                        self.regenerate_surface()
+                        self.cancel_operations()
+                        print "Fin Theta"
                 
                 
         # Theta Minus operation handler
         elif self.thetaMinus == True :
             print "ThetaMinus"
             self.thetaMinus = False
-            self.reactivate_operations()
+            self.cancel_operations()
         
         # Default behaviour, inherited    
         else : 
@@ -100,8 +116,10 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.reactivate_operations()
         self.theta = False
         self.thetaMinus = False
-        self.firstPick = None
-        self.secondPick = None
+        self.firstVertex = None
+        self.secondVertex = None
+        self.newVertex1 = None
+        self.newVertex2 = None
             
     # Dynamically change the graph layout with various algorithms
     def change_default_layout(self, algo) :
