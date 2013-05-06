@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #-*- coding:utf-8 -*-
 
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk
 from graph_tool.all import *
 import cub2graph, sys
 
