@@ -3,7 +3,7 @@
 
 from gi.repository import Gtk
 from graph_tool.all import *
-import cub2graph, sys
+import cub2graph, sys, logging, os
 
 
 class PyCubic:
@@ -95,7 +95,6 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         self.fit_to_window()
                         self.cancel_operations()
                         print "Fin Theta"
-                
                 
         # Theta Minus operation handler
         elif self.thetaMinus == True :
@@ -202,7 +201,8 @@ class HelpWindow(Gtk.MessageDialog):
      
     def destroy(self, widget, *args):
         Gtk.Widget.hide(widget)
-        
+
+
         
 class Handler:
 
@@ -246,6 +246,56 @@ class Handler:
         
     ## MENU HANDLERS ##
     
+    # Filters for file selection in FileChooserDialog objects
+    def add_filters(self, dialog):
+        filter_cub = Gtk.FileFilter()
+        filter_cub.set_name("Cub files")
+        filter_cub.add_pattern("*.cub")
+        dialog.add_filter(filter_cub)
+        
+        filter_graphml = Gtk.FileFilter()
+        filter_graphml.set_name("GraphML files")
+        filter_graphml.add_pattern("*.graphml")
+        dialog.add_filter(filter_graphml)
+    
+    # OpenCub Menu Item click handler
+    def on_open_menu_activate(self, menuItem):
+        logging.debug("Opening a file")
+        dialog = Gtk.FileChooserDialog("Open a file", None, Gtk.FileChooserAction.OPEN,
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+
+        self.add_filters(dialog)
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            filename = dialog.get_filename()
+            logging.debug("File chosen: {}".format(filename))
+            (name, ext) = os.path.splitext(filename)
+            try:
+                if '.cub' in ext:
+                    with open(filename) as f:
+                        g = cub2graph._convert(f)
+                elif '.graphml' in ext:
+                    with open(filename) as f:
+                        g = load_graph(f, "xml") # TODO: doesn't work
+                        
+                instance.clear_graph()
+                instance.display_graph(g)
+            except Exception as e:
+                logging.exception("Error {} while converting {}".format(e, filename))
+                # This should not be needed since we filter openable files
+                # But we keep it anyway just in case
+                info_dialog = Gtk.MessageDialog(dialog, Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                                                Gtk.MessageType.WARNING, Gtk.ButtonsType.CLOSE,
+                                                "Wrong file format")
+                info_dialog.format_secondary_text("Only CUB and GraphML files are currently supported.")
+                info_dialog.run()
+                info_dialog.destroy()
+            
+        elif response == Gtk.ResponseType.CANCEL:
+            logging.debug("Cancelling")
+
+        dialog.destroy()
+    
     # Quit Menu Item click handler
     def on_quit_menu_activate(self, menuItem):
         Gtk.main_quit(menuItem)
@@ -271,12 +321,10 @@ class Handler:
         self.aboutdialog = self.builder.get_object("about_dialog")
         self.aboutdialog.run()
         self.aboutdialog.hide()
-
-
-with open(sys.argv[1]) as file :
-    g = cub2graph._convert(file)
-
-    instance = PyCubic()
-    instance.display_graph(g)
-    instance.builder.connect_signals(Handler(instance.builder, instance.graphWidget))
-    Gtk.main()
+ 
+# Empty graph (mandatory for widget creation)
+g = Graph(directed=False)
+instance = PyCubic()
+instance.display_graph(g)
+instance.builder.connect_signals(Handler(instance.builder, instance.graphWidget))
+Gtk.main()

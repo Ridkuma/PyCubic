@@ -95,21 +95,13 @@ HUDIN Gwenegan</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="openGraphML_menu">
-                        <property name="label">Open GraphML File</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="image">image3</property>
-                        <property name="use_stock">False</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkImageMenuItem" id="openCub_menu">
-                        <property name="label">Open CUB File</property>
+                      <object class="GtkImageMenuItem" id="open_menu">
+                        <property name="label">Open</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="image">image4</property>
                         <property name="use_stock">False</property>
+                        <signal name="activate" handler="on_open_menu_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
