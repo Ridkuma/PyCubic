@@ -13,10 +13,12 @@ class PyCubic:
         self.builder = Gtk.Builder()
         self.builder.add_from_file("PyCubic.glade")
         self.graphFrame = self.builder.get_object("graph_frame")
+        self.treeView = self.builder.get_object("graph_treeview")
         
     # Add the GraphWidget to display graph g
-    def display_graph(self, g):
-        layout = sfdp_layout(g)
+    def display_graph(self, g, layout = None):
+        if layout == None :
+            layout = sfdp_layout(g)
         self.graphWidget = GraphWidgetCustom(self, g, layout)
         self.graphWidget.show_all()
         self.graphFrame.add(self.graphWidget)
@@ -25,6 +27,34 @@ class PyCubic:
     def clear_graph(self) :
         self.graphWidget.destroy()
         self.graphWidget = None
+        self.treeStore = Gtk.TreeStore(str)
+        for column in self.treeView.get_columns() :
+            self.treeView.remove_column(column)
+    
+    # Prepare and fill the Tree Store  
+    def build_treeStore(self, filename) :
+        self.treeStore = Gtk.TreeStore(str)
+    
+        # Fill the Tree Store   
+        self.layoutList = dict()
+        layouts = self.treeStore.append(None, ["Saved layouts"])
+        for root, dirs, files in os.walk(os.path.join(os.getcwd(), "saved_layouts", filename)) :
+            for file in files :
+                (name, ext) = os.path.splitext(file)
+                if ext == ".layout" :
+                    self.layoutList[name] = os.path.join(root,file)
+                    self.treeStore.append(layouts, [name])
+        pmatchings = self.treeStore.append(None, ["Perfect matchings"])
+        self.treeStore.append(pmatchings, ["Unknown"])
+        
+        # Generate the layout for this model
+        treeviewcolumn = Gtk.TreeViewColumn(filename)
+        self.treeView.append_column(treeviewcolumn)
+        cellrenderertext = Gtk.CellRendererText()
+        treeviewcolumn.pack_start(cellrenderertext, False)
+        treeviewcolumn.add_attribute(cellrenderertext, "text", 0)
+        
+        self.treeView.set_model(self.treeStore)
         
     # Set a widget to sensitive
     def activate_widget(self, widgetName) :
@@ -201,8 +231,7 @@ class HelpWindow(Gtk.MessageDialog):
      
     def destroy(self, widget, *args):
         Gtk.Widget.hide(widget)
-
-
+        
         
 class Handler:
 
@@ -280,6 +309,7 @@ class Handler:
                         
                 instance.clear_graph()
                 instance.display_graph(g)
+                instance.build_treeStore(os.path.splitext(os.path.basename(filename))[0])
             except Exception as e:
                 logging.exception("Error {} while converting {}".format(e, filename))
                 # This should not be needed since we filter openable files
