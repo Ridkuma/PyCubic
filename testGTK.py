@@ -172,7 +172,22 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         # Default behaviour, inherited    
         else : 
             super(GraphWidgetCustom, self).button_press_event(widget, event)
-            
+    
+    # Theta clicked
+    def theta_clicked(self):
+        self.instance.builder.get_object("theta_button").set_sensitive(False)
+        self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
+        self.instance.builder.get_object("cancel_button").set_sensitive(True)
+        self.instance.graphWidget.theta = True
+    
+    # ThetaMinus clicked
+    def thetaMinus_clicked(self):      
+        self.instance.builder.get_object("theta_button").set_sensitive(False)
+        self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
+        self.instance.builder.get_object("cancel_button").set_sensitive(True)
+        self.instance.graphWidget.thetaMinus = True
+      
+          
     # Reactivate Theta and ThetaMinus buttons
     def reactivate_operations(self):
         self.instance.activate_widget("theta_button")
@@ -256,12 +271,9 @@ class Handler:
     # Theta button click handler
     def on_theta_button_clicked(self, button):
         print "Theta button clicked"
-        self.instance.builder.get_object("theta_button").set_sensitive(False)
-        self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
-        self.instance.builder.get_object("cancel_button").set_sensitive(True)
         # TODO Update the Status bar
         try:
-            self.instance.graphWidget.theta = True
+            self.instance.graphWidget.theta_clicked()
         except AttributeError:
             self.info_dialog("Impossible operation", "No graph loaded yet")
             
@@ -269,12 +281,9 @@ class Handler:
     # ThetaMinus button click handler
     def on_thetaMinus_button_clicked(self, button):
         print "Theta Minus button clicked"
-        self.instance.builder.get_object("theta_button").set_sensitive(False)
-        self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
-        self.instance.builder.get_object("cancel_button").set_sensitive(True)
         # TODO Update the Status bar
         try:
-            self.instance.graphWidget.thetaMinus = True
+            self.instance.graphWidget.thetaMinus_clicked()
         except AttributeError:
             self.info_dialog("Impossible operation", "No graph loaded yet")
         
