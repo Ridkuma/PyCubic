@@ -167,10 +167,14 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     self.g.clear_vertex(self.firstPick)
                     self.g.clear_vertex(self.secondPick)
                     # Remove picked vertices
+                    self.selected.fa = False
+                    self.queue_draw()
                     self.removed[self.firstPick] = True
                     self.removed[self.secondPick] = True
+                    
                     # Update graph widget
-                    #self.reset_layout() # TODO Edit the layout instead of resetting
+                    self.vertex_matrix.remove_vertex(self.firstPick)
+                    self.vertex_matrix.remove_vertex(self.secondPick)
                     self.g.set_vertex_filter(self.removed, inverted=True)
                     self.regenerate_surface(lazy=False)
                     self.queue_draw()
