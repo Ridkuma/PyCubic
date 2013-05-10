@@ -252,6 +252,20 @@ class Handler:
 
     def __init__(self, instance) :
         self.instance = instance
+        # Deactivate all necessary buttons until a graph is loaded
+        self.instance.builder.get_object("theta_button").set_sensitive(False)
+        self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
+        self.instance.builder.get_object("cancel_button").set_sensitive(False)
+        self.instance.builder.get_object("saveAs_menu").set_sensitive(False)
+        self.instance.builder.get_object("exportPDF_menu").set_sensitive(False)
+        self.instance.deactivate_widget("layoutMenu")
+   
+    # Reset buttons when graph is loaded
+    def reset_buttons(self):
+        self.instance.graphWidget.cancel_operations()
+        self.instance.builder.get_object("saveAs_menu").set_sensitive(True)
+        self.instance.builder.get_object("exportPDF_menu").set_sensitive(True)
+        self.instance.activate_widget("layoutMenu")
 
     # Snippet for one-liner info dialogs
     def info_dialog(self, title, message, dialog=None):
@@ -272,28 +286,19 @@ class Handler:
     def on_theta_button_clicked(self, button):
         print "Theta button clicked"
         # TODO Update the Status bar
-        try:
-            self.instance.graphWidget.theta_clicked()
-        except AttributeError:
-            self.info_dialog("Impossible operation", "No graph loaded yet")
+        self.instance.graphWidget.theta_clicked()
             
         
     # ThetaMinus button click handler
     def on_thetaMinus_button_clicked(self, button):
         print "Theta Minus button clicked"
         # TODO Update the Status bar
-        try:
-            self.instance.graphWidget.thetaMinus_clicked()
-        except AttributeError:
-            self.info_dialog("Impossible operation", "No graph loaded yet")
+        self.instance.graphWidget.thetaMinus_clicked()
         
     # Cancel button click handler
     def on_cancel_button_clicked(self, button):
         print "Cancel"
-        try:
-            self.instance.graphWidget.cancel_operations()
-        except AttributeError:
-            self.info_dialog("Impossible operation", "No graph loaded yet")
+        self.instance.graphWidget.cancel_operations()
         
 
     # Help button click handler
@@ -326,6 +331,7 @@ class Handler:
         if response == Gtk.ResponseType.OK:
             filename = filechooser.get_filename()
             logging.debug("File chosen: {}".format(filename))
+            
             (name, ext) = os.path.splitext(filename)
             try:
                 if '.cub' in ext:
@@ -336,14 +342,50 @@ class Handler:
                         g = load_graph(f, "xml") # TODO: doesn't work
                         
                 try:
-                    instance.clear_graph() # Clear the graph
+                    self.instance.clear_graph() # Clear the graph
                 except AttributeError:
-                    pass # No graph yet, just pass
-                instance.display_graph(g)
-                instance.build_treeStore(os.path.splitext(os.path.basename(filename))[0])
+                    pass
+                    
+                                       
+                self.instance.display_graph(g)
+                self.reset_buttons()
+                self.instance.build_treeStore(os.path.splitext(os.path.basename(filename))[0])
             except Exception as e:
                 logging.exception("Error {} while converting {}".format(e, filename))
                 # This should not be needed since we filter openable files
+                # But we keep it anyway just in case
+                self.info_dialog("Wrong file format", "Only CUB and GraphML files are currently supported.", filechooser)
+            
+        elif response == Gtk.ResponseType.CANCEL:
+            logging.debug("Cancelling")
+
+        filechooser.destroy()
+    
+        
+    # SaveAs Menu Item click handler
+    def on_saveAs_menu_activate(self, menuItem):
+        logging.debug("Saving to a file")
+        filechooser = Gtk.FileChooserDialog("Save a file", None, Gtk.FileChooserAction.SAVE,
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+
+        self.add_filters(filechooser)
+        response = filechooser.run()
+
+        if response == Gtk.ResponseType.OK:
+            filename = filechooser.get_filename()
+            logging.debug("File chosen: {}".format(filename))
+            (name, ext) = os.path.splitext(filename)
+            try:
+                if '.cub' in ext:
+                    with open(filename, 'w') as f:
+                        self.instance.graphWidget.convert2cub
+                elif '.graphml' in ext:
+                    with open(filename, 'w') as f:
+                        g = load_graph(f, "xml") # TODO: doesn't work
+                        
+            except Exception as e:
+                logging.exception("Error {} while converting {}".format(e, filename))
+                # This should not be needed since we filter save fileformats
                 # But we keep it anyway just in case
                 self.info_dialog("Wrong file format", "Only CUB and GraphML files are currently supported.", filechooser)
             
@@ -358,31 +400,19 @@ class Handler:
         
     # Random Layout Menu click handler
     def on_random_menu_activate(self, menuItem):
-        try:
-            self.instance.graphWidget.change_default_layout("random")
-        except AttributeError:
-            self.info_dialog("Impossible operation", "No graph loaded yet")
+        self.instance.graphWidget.change_default_layout("random")
         
     # SFDP Layout Menu click handler
     def on_sfdp_menu_activate(self, menuItem):
-        try:
-            self.instance.graphWidget.change_default_layout("sfdp")
-        except AttributeError:
-            self.info_dialog("Impossible operation", "No graph loaded yet")
+        self.instance.graphWidget.change_default_layout("sfdp")
         
     # ARF Layout Menu click handler
     def on_arf_menu_activate(self, menuItem):
-        try:
-            self.instance.graphWidget.change_default_layout("arf")
-        except AttributeError:
-            self.info_dialog("Impossible operation", "No graph loaded yet")
+        self.instance.graphWidget.change_default_layout("arf")
         
     # Fruchter Layout Menu click handler
     def on_fruchter_menu_activate(self, menuItem):
-        try:
-            self.instance.graphWidget.change_default_layout("fruchter")
-        except AttributeError:
-            self.info_dialog("Impossible operation", "No graph loaded yet")
+        self.instance.graphWidget.change_default_layout("fruchter")
         
     # About Menu Item click handler
     def on_about_menu_activate(self, menuItem):
