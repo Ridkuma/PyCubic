@@ -72,6 +72,8 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.instance = instance
         self.theta = False
         self.thetaMinus = False
+        self.removed = self.g.new_vertex_property("bool")
+        self.removed.a = False
         self.firstPick = None
         self.secondPick = None
         self.newVertex1 = None
@@ -160,12 +162,13 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     self.g.clear_vertex(self.firstPick)
                     self.g.clear_vertex(self.secondPick)
                     # Remove picked vertices
-                    self.g.remove_vertex(self.firstPick)
-                    self.g.remove_vertex(self.secondPick)
+                    self.removed[self.firstPick] = True
+                    self.removed[self.secondPick] = True
                     # Update graph widget
-                    self.reset_layout() # TODO Edit the layout instead of resetting
-                    self.regenerate_surface()
-                    self.fit_to_window()
+                    #self.reset_layout() # TODO Edit the layout instead of resetting
+                    self.g.set_vertex_filter(self.removed, inverted=True)
+                    self.regenerate_surface(lazy=False)
+                    self.queue_draw()
                     self.cancel_operations()
                     print "Fin ThetaMinus"
         
@@ -178,14 +181,14 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.instance.builder.get_object("theta_button").set_sensitive(False)
         self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
         self.instance.builder.get_object("cancel_button").set_sensitive(True)
-        self.instance.graphWidget.theta = True
+        self.theta = True
     
     # ThetaMinus clicked
     def thetaMinus_clicked(self):      
         self.instance.builder.get_object("theta_button").set_sensitive(False)
         self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
         self.instance.builder.get_object("cancel_button").set_sensitive(True)
-        self.instance.graphWidget.thetaMinus = True
+        self.thetaMinus = True
       
           
     # Reactivate Theta and ThetaMinus buttons
