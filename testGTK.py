@@ -128,16 +128,19 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         self.pinned[self.newVertex1] = False
                         self.pinned[self.newVertex2] = False
                         print self.pinned.a
-                        newPos = sfdp_layout(self.g, pin = self.pinned, pos = tempPos)
-                        self.pos[self.newVertex1] = newPos[self.newVertex1]
-                        self.pos[self.newVertex2] = newPos[self.newVertex2]
+                        self.pos[self.newVertex1] = tempPos[self.newVertex1]
+                        self.pos[self.newVertex2] = tempPos[self.newVertex2]
+                        newPos = sfdp_layout(self.g, pin = self.pinned, pos = self.pos)
+                        """
                         self.vertex_matrix.add_vertex(self.newVertex1)
                         self.vertex_matrix.add_vertex(self.newVertex2)
                         
                         self.regenerate_surface()
                         self.queue_draw()
                         self.fit_to_window()
-                        self.cancel_operations()
+                        self.cancel_operations()"""
+                        self.instance.clear_graph()
+                        self.instance.display_graph(self.g, newPos)
                         print "Fin Theta"
                 
         # Theta Minus operation handler
