@@ -74,6 +74,8 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.thetaMinus = False
         self.removed = self.g.new_vertex_property("bool")
         self.removed.a = False
+        self.pinned = self.g.new_vertex_property("bool")
+        self.pinned.a = True
         self.firstPick = None
         self.secondPick = None
         self.newVertex1 = None
@@ -122,32 +124,34 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         self.newVertex2 = newVertex
                         self.g.add_edge(self.newVertex1, self.newVertex2)
                         # Update graph widget
-                        newPos = sfdp_layout(self.g)
+                        tempPos = sfdp_layout(self.g)
+                        self.pinned[self.newVertex1] = False
+                        self.pinned[self.newVertex2] = False
+                        print self.pinned.a
+                        newPos = sfdp_layout(self.g, pin = self.pinned, pos = tempPos)
                         self.pos[self.newVertex1] = newPos[self.newVertex1]
                         self.pos[self.newVertex2] = newPos[self.newVertex2]
+                        self.vertex_matrix.add_vertex(self.newVertex1)
+                        self.vertex_matrix.add_vertex(self.newVertex2)
                         
-                        # self.reset_layout() # TODO Edit the layout instead of resetting
                         self.regenerate_surface()
                         self.queue_draw()
-                        #self.fit_to_window()
+                        self.fit_to_window()
                         self.cancel_operations()
                         print "Fin Theta"
                 
         # Theta Minus operation handler
         elif self.thetaMinus == True :
-            print "ThetaMinus"
             self.init_picked()
             self.queue_draw()
             # Get first vertex picked
             if self.firstPick == None :
                 self.firstPick = self.g.vertex(self.picked)
                 self.picked = None
-                print "First Pick"
             # Get second vertex picked
             elif self.secondPick == None :
                 self.secondPick = self.g.vertex(self.picked)
                 self.picked = None
-                print "Second Pick"
                 
                 # Check if the picked vertices are neighbours
                 if self.g.edge(self.firstPick, self.secondPick) == None :
@@ -157,8 +161,6 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     # Create edges between neighbours
                     neighbours = [self.g.vertex_index[v] for v in self.firstPick.all_neighbours()]
                     neighbours.remove(int(self.secondPick))
-                    for n in neighbours :
-                        print n
                     self.g.add_edge(neighbours[0], neighbours[1])
                     neighbours = [self.g.vertex_index[v] for v in self.secondPick.all_neighbours()]
                     neighbours.remove(int(self.firstPick))
@@ -169,17 +171,19 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     # Remove picked vertices
                     self.selected.fa = False
                     self.queue_draw()
+                    # Update the "removed" filter
                     self.removed[self.firstPick] = True
                     self.removed[self.secondPick] = True
-                    
-                    # Update graph widget
+                    # Update the widget's vertex matrix
                     self.vertex_matrix.remove_vertex(self.firstPick)
                     self.vertex_matrix.remove_vertex(self.secondPick)
+                    # Apply the filter
                     self.g.set_vertex_filter(self.removed, inverted=True)
+                    # Update graph display
                     self.regenerate_surface(lazy=False)
                     self.queue_draw()
+                    # End
                     self.cancel_operations()
-                    print "Fin ThetaMinus"
         
         # Default behaviour, inherited    
         else : 
