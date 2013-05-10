@@ -178,16 +178,16 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
     
     # Theta clicked
     def theta_clicked(self):
-        self.instance.builder.get_object("theta_button").set_sensitive(False)
-        self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
-        self.instance.builder.get_object("cancel_button").set_sensitive(True)
+        self.instance.deactivate_widget("theta_button")
+        self.instance.deactivate_widget("thetaMinus_button")
+        self.instance.activate_widget("cancel_button")
         self.theta = True
     
     # ThetaMinus clicked
     def thetaMinus_clicked(self):      
-        self.instance.builder.get_object("theta_button").set_sensitive(False)
-        self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
-        self.instance.builder.get_object("cancel_button").set_sensitive(True)
+        self.instance.deactivate_widget("theta_button")
+        self.instance.deactivate_widget("thetaMinus_button")
+        self.instance.activate_widget("cancel_button")
         self.thetaMinus = True
       
           
@@ -219,7 +219,15 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
             self.pos = fruchterman_reingold_layout(self.g)
         self.regenerate_surface()
         self.fit_to_window()
-
+        
+    # Convert self.g to CUB format in Python File Object f
+    def save2cub(self, f):
+        f.write(str(self.g.num_edges()) + '\n')
+        for v in self.g.vertices():
+            line = str(self.g.vertex_index[v])
+            for neighbour in v.all_neighbours():
+                line += '\t' + str(self.g.vertex_index[neighbour])
+            f.write(line + '\n')
 
 class HelpWindow(Gtk.MessageDialog):
     
@@ -256,18 +264,18 @@ class Handler:
     def __init__(self, instance) :
         self.instance = instance
         # Deactivate all necessary buttons until a graph is loaded
-        self.instance.builder.get_object("theta_button").set_sensitive(False)
-        self.instance.builder.get_object("thetaMinus_button").set_sensitive(False)
-        self.instance.builder.get_object("cancel_button").set_sensitive(False)
-        self.instance.builder.get_object("saveAs_menu").set_sensitive(False)
-        self.instance.builder.get_object("exportPDF_menu").set_sensitive(False)
+        self.instance.deactivate_widget("theta_button")
+        self.instance.deactivate_widget("thetaMinus_button")
+        self.instance.deactivate_widget("cancel_button")
+        self.instance.deactivate_widget("saveAs_menu")
+        self.instance.deactivate_widget("exportPDF_menu")
         self.instance.deactivate_widget("layoutMenu")
    
     # Reset buttons when graph is loaded
     def reset_buttons(self):
         self.instance.graphWidget.cancel_operations()
-        self.instance.builder.get_object("saveAs_menu").set_sensitive(True)
-        self.instance.builder.get_object("exportPDF_menu").set_sensitive(True)
+        self.instance.activate_widget("saveAs_menu")
+        self.instance.activate_widget("exportPDF_menu")
         self.instance.activate_widget("layoutMenu")
 
     # Snippet for one-liner info dialogs
@@ -347,8 +355,7 @@ class Handler:
                 try:
                     self.instance.clear_graph() # Clear the graph
                 except AttributeError:
-                    pass
-                    
+                    pass # No graph loaded yet, just pass
                                        
                 self.instance.display_graph(g)
                 self.reset_buttons()
@@ -381,10 +388,10 @@ class Handler:
             try:
                 if '.cub' in ext:
                     with open(filename, 'w') as f:
-                        self.instance.graphWidget.convert2cub
+                        self.instance.graphWidget.save2cub(f)
                 elif '.graphml' in ext:
                     with open(filename, 'w') as f:
-                        g = load_graph(f, "xml") # TODO: doesn't work
+                        g = save_graph(f, "xml") # TODO: doesn't work
                         
             except Exception as e:
                 logging.exception("Error {} while converting {}".format(e, filename))
