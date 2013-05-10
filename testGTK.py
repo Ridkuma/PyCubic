@@ -222,11 +222,14 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         
     # Convert self.g to CUB format in Python File Object f
     def save2cub(self, f):
-        f.write(str(self.g.num_edges()) + '\n')
-        for v in self.g.vertices():
-            line = str(self.g.vertex_index[v])
+        g = self.g.copy() # local copy of the graph
+        g.purge_vertices() # purge hidden vertices
+        
+        f.write(str(g.num_vertices()) + '\n')
+        for v in g.vertices():
+            line = str(g.vertex_index[v])
             for neighbour in v.all_neighbours():
-                line += '\t' + str(self.g.vertex_index[neighbour])
+                line += '\t' + str(g.vertex_index[neighbour])
             f.write(line + '\n')
 
 class HelpWindow(Gtk.MessageDialog):
