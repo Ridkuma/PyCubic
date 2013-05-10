@@ -122,9 +122,14 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         self.newVertex2 = newVertex
                         self.g.add_edge(self.newVertex1, self.newVertex2)
                         # Update graph widget
-                        self.reset_layout() # TODO Edit the layout instead of resetting
+                        newPos = sfdp_layout(self.g)
+                        self.pos[self.newVertex1] = newPos[self.newVertex1]
+                        self.pos[self.newVertex2] = newPos[self.newVertex2]
+                        
+                        # self.reset_layout() # TODO Edit the layout instead of resetting
                         self.regenerate_surface()
-                        self.fit_to_window()
+                        self.queue_draw()
+                        #self.fit_to_window()
                         self.cancel_operations()
                         print "Fin Theta"
                 
