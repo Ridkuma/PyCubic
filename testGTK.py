@@ -118,6 +118,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.secondPick = None
         self.newVertex1 = None
         self.newVertex2 = None
+        self.rollbackEdge = None
     
     # Custom Button Press Event, implementing Theta operations
     def button_press_event(self, widget, event):
@@ -149,6 +150,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     newVertex = self.g.add_vertex()
                     self.g.add_edge(self.firstPick, newVertex)
                     self.g.add_edge(self.secondPick, newVertex)
+                    self.rollbackEdge = (self.firstPick, self.secondPick)
                     self.g.remove_edge(edge)
                     if self.newVertex1 == None :
                         # Stock the new vertex, and wait for the second edge pick
@@ -269,6 +271,11 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         
     # Cancel all current operations
     def cancel_operations(self):
+        if self.newVertex1 != None :
+            self.g.clear_vertex(self.newVertex1)
+            self.g.remove_vertex(self.newVertex1)
+        if self.rollbackEdge != None :
+            self.g.add_edge(self.rollbackEdge[0], self.rollbackEdge[1])
         self.reactivate_operations()
         self.theta = False
         self.thetaMinus = False
@@ -276,6 +283,8 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.secondPick = None
         self.newVertex1 = None
         self.newVertex2 = None
+        
+            
         
     # Change parameters if the graph has been modified
     def set_to_modified(self):
