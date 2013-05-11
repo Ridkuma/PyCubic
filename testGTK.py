@@ -80,6 +80,7 @@ class PyCubic:
         treeviewcolumn.add_attribute(cellrenderertext, "text", 0)
         
         self.treeView.set_model(self.treeStore)
+        self.treeView.expand_all()
     
     # Clear the current TreeStore and TreeViewColumns
     def clear_treeStore(self) :    
