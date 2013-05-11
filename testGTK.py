@@ -37,7 +37,13 @@ class PyCubic:
         if not os.path.exists(os.path.split(filename)[0]):
             os.makedirs(os.path.split(filename)[0])
         with open(filename, 'wb') as f:
-            cPickle.dump(self.graphWidget, f)
+            try:
+                cPickle.dump(self.graphWidget, f)
+            except Exception as e:
+                logging.exception(e)
+        if not layout_name in self.layoutList:
+            self.layoutList[layout_name] = filename
+            self.treeStore.append(self.layouts, [layout_name])
         
     # Load layout from .layout file
     def load_layout(self, layout_name):
@@ -54,13 +60,13 @@ class PyCubic:
     
         # Fill the Tree Store   
         self.layoutList = dict()
-        layouts = self.treeStore.append(None, ["Saved layouts"])
+        self.layouts = self.treeStore.append(None, ["Saved layouts"])
         for root, dirs, files in os.walk(os.path.join(os.getcwd(), "saved_layouts", filename)) :
             for file in files :
                 (name, ext) = os.path.splitext(file)
                 if ext == ".layout" :
                     self.layoutList[name] = os.path.join(root, file)
-                    self.treeStore.append(layouts, [name])
+                    self.treeStore.append(self.layouts, [name])
         pmatchings = self.treeStore.append(None, ["Perfect matchings"])
         self.treeStore.append(pmatchings, ["Unknown"])
         
@@ -349,13 +355,36 @@ class Handler:
         self.instance.activate_widget("layoutMenu")
 
     # Snippet for one-liner info dialogs
-    def info_dialog(self, title, message, dialog=None):
-        info_dialog = Gtk.MessageDialog(dialog, Gtk.DialogFlags.DESTROY_WITH_PARENT,
+    def info_dialog(self, title, message, parent=None):
+        info_dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT,
                                                 Gtk.MessageType.WARNING, Gtk.ButtonsType.CLOSE,
                                                 title)
         info_dialog.format_secondary_text(message)
         info_dialog.run()
         info_dialog.destroy()
+
+    # Snipper for one-liner input dialog
+    def input_dialog(self, title, default_input="", parent=None):
+        """Display a dialog with a text entry. Return the text, or None if canceled."""
+        input_dialog = Gtk.MessageDialog(parent,
+                              Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                              Gtk.MessageType.OTHER,
+                              Gtk.ButtonsType.OK_CANCEL,
+                              title)
+        entry = Gtk.Entry()
+        entry.set_text(default_input)
+        entry.show()
+        input_dialog.vbox.pack_end(entry, True, True, 0)
+        entry.connect('activate', lambda _: input_dialog.response(Gtk.ResponseType.OK))
+        input_dialog.set_default_response(Gtk.ResponseType.OK)
+
+        response = input_dialog.run()
+        text = entry.get_text().decode('utf8')
+        input_dialog.destroy()
+        if response == Gtk.ResponseType.OK:
+            return text
+        else:
+            return None
 
     # Main window delete handler
     def onDeleteWindow(self, *windows):
@@ -365,9 +394,16 @@ class Handler:
     
     # Save layout button click handler
     def on_save_layout_button_clicked(self, button):
-        layout_name = 'test'
-        self.instance.save_layout(layout_name)
-        # TODO refresh saved layout list
+        layout_name = self.input_dialog("Choose layout name",
+                                        default_input="awesome_snark",
+                                        parent=instance.builder.get_object("MainWindow"))
+        if layout_name != None:
+            layout_name = layout_name.strip().replace(' ', '_')
+            if layout_name != '':
+                self.instance.save_layout(layout_name)
+                # TODO refresh saved layout list
+            else:
+                self.info_dialog("Error", "Invalid name", parent=instance.builder.get_object("MainWindow"))
         
     # Theta button click handler
     def on_theta_button_clicked(self, button):
