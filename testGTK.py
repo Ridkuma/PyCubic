@@ -14,6 +14,8 @@ class PyCubic:
         self.builder.add_from_file("PyCubic.glade")
         self.graphFrame = self.builder.get_object("graph_frame")
         self.treeView = self.builder.get_object("graph_treeview")
+        self.statusBar = self.builder.get_object("statusbar")
+        self.update_statusbar("Welcome to PyCubic!")
         
     # Add the GraphWidget to display graph g
     def display_graph(self, g, layout = None):
@@ -92,6 +94,11 @@ class PyCubic:
     # Set a widget to insensitive
     def deactivate_widget(self, widgetName) :
         self.builder.get_object(widgetName).set_sensitive(False)
+        
+    # Set the statusbar message to display
+    def update_statusbar(self, message) :
+        self.statusBar.pop(0)
+        self.statusBar.push(0, message)
     
         
 class GraphWidgetCustom(graph_tool.draw.GraphWidget):
@@ -124,6 +131,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
             if self.firstPick == None :
                 self.firstPick = self.g.vertex(self.picked)
                 self.picked = None
+                self.instance.update_statusbar("Select a second vertex, which will define the picked edge.")
             # Get second vertex picked
             elif self.secondPick == None :
                 self.secondPick = self.g.vertex(self.picked)
@@ -132,7 +140,8 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                 # Check if the picked vertices are neighbours
                 edge = self.g.edge(self.firstPick, self.secondPick)
                 if edge == None :
-                    print "Incorrect edge selection"
+                    logging.info("Incorrect edge selection")
+                    self.instance.update_statusbar("Incorrect edge selection, cancelling operations...")
                     self.cancel_operations()
                 else :
                     # Insert new vertex between picked vertices
@@ -143,13 +152,16 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     if self.newVertex1 == None :
                         # Stock the new vertex, and wait for the second edge pick
                         self.newVertex1 = newVertex
+                        self.instance.update_statusbar("First edge saved, pick a vertex for the second edge.")
                         self.firstPick = None
                         self.secondPick = None
                     else :
                         # Create the second new vertex
+                        self.instance.update_statusbar("Applying Theta Operation...")
                         self.newVertex2 = newVertex
                         self.g.add_edge(self.newVertex1, self.newVertex2)
                         # Generate random position for new vertices
+                        self.instance.update_statusbar("Updating objects' positions...")
                         tempPos = random_layout(self.g)
                         # Set these to 'moveable'
                         self.pinned[self.newVertex1] = False
@@ -168,11 +180,13 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         self.vertex_matrix.add_vertex(self.newVertex1)
                         self.vertex_matrix.add_vertex(self.newVertex2)
                         # Update widget
+                        self.instance.update_statusbar("Updating widget...")
                         self.regenerate_surface(lazy=False)
                         # End operation
                         if not self.modified : 
                             self.set_to_modified()
                         self.cancel_operations()
+                        self.instance.update_statusbar("Done.")
                 
         # Theta Minus operation handler
         elif self.thetaMinus == True :
@@ -182,6 +196,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
             if self.firstPick == None :
                 self.firstPick = self.g.vertex(self.picked)
                 self.picked = None
+                self.instance.update_statusbar("Select a second vertex, which will define the picked edge.")
             # Get second vertex picked
             elif self.secondPick == None :
                 self.secondPick = self.g.vertex(self.picked)
@@ -189,10 +204,12 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                 
                 # Check if the picked vertices are neighbours
                 if self.g.edge(self.firstPick, self.secondPick) == None :
-                    print "Incorrect edge selection"
+                    logging.info("Incorrect edge selection")
+                    self.instance.update_statusbar("Incorrect edge selection, cancelling operations...")
                     self.cancel_operations()
                 else :
                     # Create edges between neighbours
+                    self.instance.update_statusbar("Applying ThetaMinus operation...")
                     neighbours = [self.g.vertex_index[v] for v in self.firstPick.all_neighbours()]
                     neighbours.remove(int(self.secondPick))
                     self.g.add_edge(neighbours[0], neighbours[1])
@@ -206,6 +223,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     self.selected.fa = False
                     self.queue_draw()
                     # Update the "removed" filter
+                    self.instance.update_statusbar("Updating widget...")
                     self.removed[self.firstPick] = True
                     self.removed[self.secondPick] = True
                     # Update the widget's vertex matrix
@@ -220,10 +238,12 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     if not self.modified :
                         self.set_to_modified()
                     self.cancel_operations()
+                    self.instance.update_statusbar("Done.")
         
         # Default behaviour, inherited    
         else : 
             super(GraphWidgetCustom, self).button_press_event(widget, event)
+            self.instance.update_statusbar("Ready.")
     
     # Theta clicked
     def theta_clicked(self):
@@ -279,6 +299,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
             self.pos = fruchterman_reingold_layout(self.g)
         self.regenerate_surface()
         self.fit_to_window()
+        self.instance.update_statusbar(algo.capitalize() + " layout applied.")
         
     # Convert self.g to CUB format in Python File Object f
     def save2cub(self, f):
@@ -407,20 +428,21 @@ class Handler:
         
     # Theta button click handler
     def on_theta_button_clicked(self, button):
-        print "Theta button clicked"
-        # TODO Update the Status bar
+        logging.debug("Theta button clicked")
+        self.instance.update_statusbar("Theta operation. Please pick a vertex.")
         self.instance.graphWidget.theta_clicked()
             
         
     # ThetaMinus button click handler
     def on_thetaMinus_button_clicked(self, button):
-        print "Theta Minus button clicked"
-        # TODO Update the Status bar
+        logging.debug("Theta Minus button clicked")
+        self.instance.update_statusbar("ThetaMinus operation. Please pick a vertex.")
         self.instance.graphWidget.thetaMinus_clicked()
         
     # Cancel button click handler
     def on_cancel_button_clicked(self, button):
-        print "Cancel"
+        logging.debug("Cancel")
+        self.instance.update_statusbar("Operations cancelled.")
         self.instance.graphWidget.cancel_operations()
         
 
@@ -481,6 +503,7 @@ class Handler:
                 self.instance.display_graph(g)
                 self.instance.filename = filename
                 self.reset_buttons()
+                self.instance.update_statusbar("File " + os.path.basename(filename) + " loaded successfully.")
                 self.instance.build_treeStore()
             except Exception as e:
                 logging.exception("Error {} while converting {}".format(e, filename))
@@ -515,9 +538,11 @@ class Handler:
                     if '.cub' in ext:
                         with open(filename, 'wb') as f:
                             self.instance.graphWidget.save2cub(f)
+                            self.instance.update_statusbar("File " + os.path.basename(filename) + " saved successfully.")
                     elif '.g6' in ext:
                         with open(filename, 'wb') as f:
                              self.instance.graphWidget.save2g6(f)
+                             self.instance.update_statusbar("File " + os.path.basename(filename) + " saved successfully.")
                     else:
                         try_again = True
                         self.info_dialog("Wrong file format", "Only CUB and G6 files are currently supported.", filechooser)
