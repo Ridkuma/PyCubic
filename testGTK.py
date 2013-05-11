@@ -27,9 +27,7 @@ class PyCubic:
     def clear_graph(self) :
         self.graphWidget.destroy()
         self.graphWidget = None
-        self.treeStore = Gtk.TreeStore(str)
-        for column in self.treeView.get_columns() :
-            self.treeView.remove_column(column)
+        self.clear_treeStore()
     
     # Save layout to .layout file
     def save_layout(self, layout_name):
@@ -50,7 +48,8 @@ class PyCubic:
             self.graphWidget = cPickle.load(f)
             
     # Prepare and fill the Tree Store  
-    def build_treeStore(self, filename) :
+    def build_treeStore(self) :
+        filename = os.path.splitext(os.path.basename(self.filename))[0]
         self.treeStore = Gtk.TreeStore(str)
     
         # Fill the Tree Store   
@@ -73,6 +72,12 @@ class PyCubic:
         treeviewcolumn.add_attribute(cellrenderertext, "text", 0)
         
         self.treeView.set_model(self.treeStore)
+    
+    # Clear the current TreeStore and TreeViewColumns
+    def clear_treeStore(self) :    
+        self.treeStore = Gtk.TreeStore(str)
+        for column in self.treeView.get_columns() :
+            self.treeView.remove_column(column)
         
     # Set a widget to sensitive
     def activate_widget(self, widgetName) :
@@ -88,6 +93,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
     def __init__(self, instance, g, layout) :
         super(GraphWidgetCustom, self).__init__(g, layout, update_layout = False)
         self.instance = instance
+        self.modified = False
         self.theta = False
         self.thetaMinus = False
         self.removed = self.g.new_vertex_property("bool")
@@ -106,19 +112,16 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         
         # Theta operation handler
         if self.theta == True :
-            print "Theta"
             self.init_picked()
             self.queue_draw()
             # Get first vertex picked
             if self.firstPick == None :
                 self.firstPick = self.g.vertex(self.picked)
                 self.picked = None
-                print "First Pick"
             # Get second vertex picked
             elif self.secondPick == None :
                 self.secondPick = self.g.vertex(self.picked)
                 self.picked = None
-                print "Second Pick"
                 
                 # Check if the picked vertices are neighbours
                 edge = self.g.edge(self.firstPick, self.secondPick)
@@ -128,7 +131,6 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                 else :
                     # Insert new vertex between picked vertices
                     newVertex = self.g.add_vertex()
-                    print "Vertex added"
                     self.g.add_edge(self.firstPick, newVertex)
                     self.g.add_edge(self.secondPick, newVertex)
                     self.g.remove_edge(edge)
@@ -141,19 +143,30 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         # Create the second new vertex
                         self.newVertex2 = newVertex
                         self.g.add_edge(self.newVertex1, self.newVertex2)
-                        # Update graph widget
+                        # Generate random position for new vertices
                         tempPos = random_layout(self.g)
+                        # Set these to 'moveable'
                         self.pinned[self.newVertex1] = False
                         self.pinned[self.newVertex2] = False
+                        # Add new positions to the current layout
                         self.pos[self.newVertex1] = tempPos[self.newVertex1]
                         self.pos[self.newVertex2] = tempPos[self.newVertex2]
+                        # Change the position to place these the best way possible
+                        # without moving the other nodes
                         newPos = sfdp_layout(self.g, pin = self.pinned, K = 0.1, pos = self.pos)
                         self.pos = newPos
+                        # Set them back to immutable
+                        self.pinned[self.newVertex1] = True
+                        self.pinned[self.newVertex2] = True
+                        # Add them to the vertex matrix
                         self.vertex_matrix.add_vertex(self.newVertex1)
                         self.vertex_matrix.add_vertex(self.newVertex2)
+                        # Update widget
                         self.regenerate_surface(lazy=False)
+                        # End operation
+                        if not self.modified : 
+                            self.set_to_modified()
                         self.cancel_operations()
-                        print "Fin Theta"
                 
         # Theta Minus operation handler
         elif self.thetaMinus == True :
@@ -198,6 +211,8 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     self.regenerate_surface(lazy=False)
                     self.queue_draw()
                     # End
+                    if not self.modified :
+                        self.set_to_modified()
                     self.cancel_operations()
         
         # Default behaviour, inherited    
@@ -234,6 +249,17 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.secondPick = None
         self.newVertex1 = None
         self.newVertex2 = None
+        
+    # Change parameters if the graph has been modified
+    def set_to_modified(self):
+        self.modified = True
+        filename = self.instance.filename
+        name, ext = os.path.splitext(os.path.basename(filename))
+        name += "-new" + ext
+        self.instance.filename = os.path.join(os.path.dirname(filename), name)
+        self.instance.clear_treeStore()
+        self.instance.build_treeStore()
+        
             
     # Dynamically change the graph layout with various algorithms
     def change_default_layout(self, algo) :
@@ -260,6 +286,8 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                 line += '\t' + str(g.vertex_index[neighbour])
             f.write(line + '\n')
             
+        self.modified = False
+        
     # Convert self.g to G6 format in Python File Object f
     def save2g6(self, f):
         temp_file = tempfile.NamedTemporaryFile()
@@ -267,6 +295,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         temp_file.seek(0)
         cub2g6._convert(temp_file, f)
         temp_file.close()
+        self.modified = False
 
 class HelpWindow(Gtk.MessageDialog):
     
@@ -414,8 +443,9 @@ class Handler:
                     pass # No graph loaded yet, just pass
                                        
                 self.instance.display_graph(g)
+                self.instance.filename = filename
                 self.reset_buttons()
-                self.instance.build_treeStore(os.path.splitext(os.path.basename(filename))[0])
+                self.instance.build_treeStore()
             except Exception as e:
                 logging.exception("Error {} while converting {}".format(e, filename))
             
