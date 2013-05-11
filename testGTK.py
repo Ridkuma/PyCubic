@@ -130,7 +130,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         print self.pinned.a
                         self.pos[self.newVertex1] = tempPos[self.newVertex1]
                         self.pos[self.newVertex2] = tempPos[self.newVertex2]
-                        newPos = sfdp_layout(self.g, pin = self.pinned, pos = self.pos)
+                        newPos = sfdp_layout(self.g, pin=self.pinned, pos=self.pos, K=0.1)
                         """
                         self.vertex_matrix.add_vertex(self.newVertex1)
                         self.vertex_matrix.add_vertex(self.newVertex2)
