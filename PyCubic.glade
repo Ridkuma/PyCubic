@@ -105,13 +105,13 @@ HUDIN Gwenegan</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="saveAs_menu">
-                        <property name="label">gtk-save-as</property>
+                      <object class="GtkImageMenuItem" id="save_menu">
+                        <property name="label">Save</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="on_saveAs_menu_activate" swapped="no"/>
+                        <signal name="activate" handler="on_save_menu_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -298,6 +298,21 @@ HUDIN Gwenegan</property>
                     <property name="homogeneous">True</property>
                     <property name="layout_style">start</property>
                     <child>
+                      <object class="GtkButton" id="save_layout_button">
+                        <property name="label" translatable="yes">Save layout</property>
+                        <property name="visible">True</property>
+                        <property name="sensitive">False</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <signal name="clicked" handler="on_save_layout_button_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
                       <object class="GtkButton" id="theta_button">
                         <property name="label">Theta</property>
                         <property name="visible">True</property>
@@ -309,7 +324,7 @@ HUDIN Gwenegan</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">0</property>
+                        <property name="position">1</property>
                       </packing>
                     </child>
                     <child>
@@ -324,7 +339,7 @@ HUDIN Gwenegan</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">1</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
                     <child>
@@ -339,7 +354,7 @@ HUDIN Gwenegan</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">2</property>
+                        <property name="position">3</property>
                       </packing>
                     </child>
                     <child>
@@ -354,7 +369,7 @@ HUDIN Gwenegan</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">3</property>
+                        <property name="position">4</property>
                       </packing>
                     </child>
                   </object>

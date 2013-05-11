@@ -3,7 +3,7 @@
 
 from gi.repository import Gtk
 from graph_tool.all import *
-import cub2graph, sys, logging, os
+import cub2g6, g62cub, tempfile, sys, logging, os, cPickle
 
 
 class PyCubic:
@@ -31,6 +31,24 @@ class PyCubic:
         for column in self.treeView.get_columns() :
             self.treeView.remove_column(column)
     
+    # Save layout to .layout file
+    def save_layout(self, layout_name):
+        filename = os.path.join(os.getcwd(), 'saved_layouts',
+                                os.path.basename(os.path.splitext(self.filename)[0]),
+                                layout_name + '.layout')
+        if not os.path.exists(os.path.split(filename)[0]):
+            os.makedirs(os.path.split(filename)[0])
+        with open(filename, 'wb') as f:
+            cPickle.dump(self.graphWidget, f)
+        
+    # Load layout from .layout file
+    def load_layout(self, layout_name):
+        filename = os.path.join(os.getcwd(), 'saved_layouts',
+                                os.path.basename(os.path.splitext(self.filename)[0]),
+                                layout_name + '.layout')
+        with open(filename, 'rb') as f:
+            self.graphWidget = cPickle.load(f)
+            
     # Prepare and fill the Tree Store  
     def build_treeStore(self, filename) :
         self.treeStore = Gtk.TreeStore(str)
@@ -42,7 +60,7 @@ class PyCubic:
             for file in files :
                 (name, ext) = os.path.splitext(file)
                 if ext == ".layout" :
-                    self.layoutList[name] = os.path.join(root,file)
+                    self.layoutList[name] = os.path.join(root, file)
                     self.treeStore.append(layouts, [name])
         pmatchings = self.treeStore.append(None, ["Perfect matchings"])
         self.treeStore.append(pmatchings, ["Unknown"])
@@ -247,6 +265,14 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
             for neighbour in v.all_neighbours():
                 line += '\t' + str(g.vertex_index[neighbour])
             f.write(line + '\n')
+            
+    # Convert self.g to G6 format in Python File Object f
+    def save2g6(self, f):
+        temp_file = tempfile.NamedTemporaryFile()
+        self.save2cub(temp_file)
+        temp_file.seek(0)
+        cub2g6._convert(temp_file, f)
+        temp_file.close()
 
 class HelpWindow(Gtk.MessageDialog):
     
@@ -283,17 +309,19 @@ class Handler:
     def __init__(self, instance) :
         self.instance = instance
         # Deactivate all necessary buttons until a graph is loaded
+        self.instance.deactivate_widget("save_layout_button")
         self.instance.deactivate_widget("theta_button")
         self.instance.deactivate_widget("thetaMinus_button")
         self.instance.deactivate_widget("cancel_button")
-        self.instance.deactivate_widget("saveAs_menu")
+        self.instance.deactivate_widget("save_menu")
         self.instance.deactivate_widget("exportPDF_menu")
         self.instance.deactivate_widget("layoutMenu")
    
     # Reset buttons when graph is loaded
     def reset_buttons(self):
         self.instance.graphWidget.cancel_operations()
-        self.instance.activate_widget("saveAs_menu")
+        self.instance.activate_widget("save_layout_button")
+        self.instance.activate_widget("save_menu")
         self.instance.activate_widget("exportPDF_menu")
         self.instance.activate_widget("layoutMenu")
 
@@ -311,6 +339,12 @@ class Handler:
         Gtk.main_quit(*windows)
         
     ## BUTTON HANDLERS ##
+    
+    # Save layout button click handler
+    def on_save_layout_button_clicked(self, button):
+        layout_name = 'test'
+        self.instance.save_layout(layout_name)
+        # TODO refresh saved layout list
         
     # Theta button click handler
     def on_theta_button_clicked(self, button):
@@ -339,15 +373,21 @@ class Handler:
     
     # Filters for file selection in FileChooserDialog objects
     def add_filters(self, dialog):
+        filter_graph = Gtk.FileFilter()
+        filter_graph.set_name("CUB or G6 files")
+        filter_graph.add_pattern("*.cub")
+        filter_graph.add_pattern("*.g6")
+        dialog.add_filter(filter_graph)
+    
         filter_cub = Gtk.FileFilter()
-        filter_cub.set_name("Cub files")
+        filter_cub.set_name("CUB files")
         filter_cub.add_pattern("*.cub")
         dialog.add_filter(filter_cub)
         
-        filter_graphml = Gtk.FileFilter()
-        filter_graphml.set_name("GraphML files")
-        filter_graphml.add_pattern("*.graphml")
-        dialog.add_filter(filter_graphml)
+        filter_g6 = Gtk.FileFilter()
+        filter_g6.set_name("G6 files")
+        filter_g6.add_pattern("*.g6")
+        dialog.add_filter(filter_g6)
     
     # OpenCub Menu Item click handler
     def on_open_menu_activate(self, menuItem):
@@ -360,16 +400,19 @@ class Handler:
 
         if response == Gtk.ResponseType.OK:
             filename = filechooser.get_filename()
+            self.instance.filename = filename
             logging.debug("File chosen: {}".format(filename))
             
             (name, ext) = os.path.splitext(filename)
             try:
                 if '.cub' in ext:
-                    with open(filename) as f:
-                        g = cub2graph._convert(f)
-                elif '.graphml' in ext:
-                    with open(filename) as f:
-                        g = load_graph(f, "xml") # TODO: doesn't work
+                    with open(filename, 'rb') as f:
+                        g = GraphFromFile.from_cub(f)
+                elif '.g6' in ext:
+                    with open(filename, 'rb') as f:
+                        g = GraphFromFile.from_g6(f)
+                else:
+                    self.info_dialog("Wrong file format", "Only CUB and G6 files are currently supported.", filechooser)
                         
                 try:
                     self.instance.clear_graph() # Clear the graph
@@ -381,9 +424,6 @@ class Handler:
                 self.instance.build_treeStore(os.path.splitext(os.path.basename(filename))[0])
             except Exception as e:
                 logging.exception("Error {} while converting {}".format(e, filename))
-                # This should not be needed since we filter openable files
-                # But we keep it anyway just in case
-                self.info_dialog("Wrong file format", "Only CUB and GraphML files are currently supported.", filechooser)
             
         elif response == Gtk.ResponseType.CANCEL:
             logging.debug("Cancelling")
@@ -391,35 +431,42 @@ class Handler:
         filechooser.destroy()
     
         
-    # SaveAs Menu Item click handler
-    def on_saveAs_menu_activate(self, menuItem):
+    # Save Menu Item click handler
+    def on_save_menu_activate(self, menuItem):
         logging.debug("Saving to a file")
         filechooser = Gtk.FileChooserDialog("Save a file", None, Gtk.FileChooserAction.SAVE,
-                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
+        filechooser.set_do_overwrite_confirmation(True)
+        filechooser.set_filename(self.instance.filename)
+        filechooser.set_current_name(os.path.basename(self.instance.filename))
 
         self.add_filters(filechooser)
-        response = filechooser.run()
+        
+        try_again = True
+        while try_again:
+            try_again = False
+            response = filechooser.run()
 
-        if response == Gtk.ResponseType.OK:
-            filename = filechooser.get_filename()
-            logging.debug("File chosen: {}".format(filename))
-            (name, ext) = os.path.splitext(filename)
-            try:
-                if '.cub' in ext:
-                    with open(filename, 'w') as f:
-                        self.instance.graphWidget.save2cub(f)
-                elif '.graphml' in ext:
-                    with open(filename, 'w') as f:
-                        g = save_graph(f, "xml") # TODO: doesn't work
-                        
-            except Exception as e:
-                logging.exception("Error {} while converting {}".format(e, filename))
-                # This should not be needed since we filter save fileformats
-                # But we keep it anyway just in case
-                self.info_dialog("Wrong file format", "Only CUB and GraphML files are currently supported.", filechooser)
-            
-        elif response == Gtk.ResponseType.CANCEL:
-            logging.debug("Cancelling")
+            if response == Gtk.ResponseType.OK:
+                filename = filechooser.get_filename()
+                logging.debug("File chosen: {}".format(filename))
+                (name, ext) = os.path.splitext(filename)
+                try:
+                    if '.cub' in ext:
+                        with open(filename, 'wb') as f:
+                            self.instance.graphWidget.save2cub(f)
+                    elif '.g6' in ext:
+                        with open(filename, 'wb') as f:
+                             self.instance.graphWidget.save2g6(f)
+                    else:
+                        try_again = True
+                        self.info_dialog("Wrong file format", "Only CUB and G6 files are currently supported.", filechooser)
+                            
+                except Exception as e:
+                    logging.exception("Error {} while converting {}".format(e, filename))
+                
+            elif response == Gtk.ResponseType.CANCEL:
+                logging.debug("Cancelling")
 
         filechooser.destroy()
     
@@ -449,6 +496,42 @@ class Handler:
         self.aboutdialog.run()
         self.aboutdialog.hide()
 
+
+class GraphFromFile:
+    @classmethod
+    def from_cub(self, cub_file):
+        """Convert a CUB Python File Object and return a graph-tool Graph Object"""
+        # Get number of vertices
+        n = int(cub_file.readline())
+        
+        # Initialize graph
+        graph = Graph(directed=False)
+        
+        # Get all graph data
+        graph_dict = {}
+        for line in cub_file :
+            data = line.split()
+            node = data[0]
+            edges = data[1:]
+            graph_dict[node] = edges
+            graph.add_vertex() # Adding vertex now saves some computation
+        
+        for start_node, edges in graph_dict.iteritems():
+            for end_node in edges:
+                graph_dict[end_node].remove(start_node)
+                graph.add_edge(graph.vertex(start_node), graph.vertex(end_node))
+             
+        return graph
+
+    @classmethod
+    def from_g6(self, g6_file):
+        """Convert a G6 Python File Object and return a graph-tool Graph Object"""
+        temp_file = tempfile.NamedTemporaryFile()
+        g62cub._convert(g6_file, temp_file)
+        temp_file.seek(0)
+        graph = self.from_cub(temp_file)
+        temp_file.close()
+        return graph
 
 # Run the GUI
 if __name__ == "__main__":
