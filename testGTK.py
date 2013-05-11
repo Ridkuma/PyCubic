@@ -142,23 +142,17 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         self.newVertex2 = newVertex
                         self.g.add_edge(self.newVertex1, self.newVertex2)
                         # Update graph widget
-                        tempPos = sfdp_layout(self.g)
+                        tempPos = random_layout(self.g)
                         self.pinned[self.newVertex1] = False
                         self.pinned[self.newVertex2] = False
-                        print self.pinned.a
                         self.pos[self.newVertex1] = tempPos[self.newVertex1]
                         self.pos[self.newVertex2] = tempPos[self.newVertex2]
-                        newPos = sfdp_layout(self.g, pin=self.pinned, pos=self.pos, K=0.1)
-                        """
+                        newPos = sfdp_layout(self.g, pin = self.pinned, K = 0.1, pos = self.pos)
+                        self.pos = newPos
                         self.vertex_matrix.add_vertex(self.newVertex1)
                         self.vertex_matrix.add_vertex(self.newVertex2)
-                        
-                        self.regenerate_surface()
-                        self.queue_draw()
-                        self.fit_to_window()
-                        self.cancel_operations()"""
-                        self.instance.clear_graph()
-                        self.instance.display_graph(self.g, newPos)
+                        self.regenerate_surface(lazy=False)
+                        self.cancel_operations()
                         print "Fin Theta"
                 
         # Theta Minus operation handler
