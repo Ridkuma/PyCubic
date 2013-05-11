@@ -188,7 +188,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                         # End operation
                         if not self.modified : 
                             self.set_to_modified()
-                        self.cancel_operations()
+                        self.re_init()
                         self.instance.update_statusbar("Done.")
                 
         # Theta Minus operation handler
@@ -209,11 +209,6 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                 if self.g.edge(self.firstPick, self.secondPick) == None :
                     logging.info("Incorrect edge selection")
                     self.instance.update_statusbar("Incorrect edge selection, cancelling operations...")
-                    if self.newVertex1 != None :
-                        self.g.clear_vertex(self.newVertex1)
-                        self.g.remove_vertex(self.newVertex1)
-                    if self.rollbackEdge != None :
-                        self.g.add_edge(self.rollbackEdge[0], self.rollbackEdge[1])
                     self.cancel_operations()
                 else :
                     # Create edges between neighbours
@@ -245,7 +240,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
                     # End
                     if not self.modified :
                         self.set_to_modified()
-                    self.cancel_operations()
+                    self.re_init()
                     self.instance.update_statusbar("Done.")
         
         # Default behaviour, inherited    
@@ -276,6 +271,15 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         
     # Cancel all current operations
     def cancel_operations(self):
+        if self.newVertex1 != None :
+            self.g.clear_vertex(self.newVertex1)
+            self.g.remove_vertex(self.newVertex1)
+        if self.rollbackEdge != None :
+            self.g.add_edge(self.rollbackEdge[0], self.rollbackEdge[1])
+        self.re_init()
+        
+    # Reinit widget
+    def re_init(self) :
         self.reactivate_operations()
         self.theta = False
         self.thetaMinus = False
@@ -378,7 +382,7 @@ class Handler:
    
     # Reset buttons when graph is loaded
     def reset_buttons(self):
-        self.instance.graphWidget.cancel_operations()
+        self.instance.graphWidget.re_init()
         self.instance.activate_widget("save_layout_button")
         self.instance.activate_widget("save_menu")
         self.instance.activate_widget("exportPDF_menu")
