@@ -61,7 +61,7 @@ class PyCubic:
         for root, dirs, files in os.walk(os.path.join(os.getcwd(), "saved_layouts", filename)) :
             for file in files :
                 (name, ext) = os.path.splitext(file)
-                if ext == ".layout" :
+                if ext == ".graphml" :
                     self.layoutList[name] = os.path.join(root, file)
                     self.treeStore.append(self.layouts, [name])
         pmatchings = self.treeStore.append(None, ["Perfect matchings"])
@@ -147,7 +147,7 @@ class PyCubic:
     def load_layout(self, layout_name):
         filename = os.path.join(os.getcwd(), 'saved_layouts',
                                 os.path.basename(os.path.splitext(self.filename)[0]),
-                                layout_name + '.layout')
+                                layout_name + '.graphml')
         try:
             g = load_graph(filename, fmt="xml")
             self.clear_graph()
@@ -425,7 +425,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
     def save_layout(self, layout_name):
         filename = os.path.join(os.getcwd(), 'saved_layouts',
                                 os.path.basename(os.path.splitext(self.instance.filename)[0]),
-                                layout_name + '.layout')
+                                layout_name + '.graphml')
         if not os.path.exists(os.path.split(filename)[0]):
             os.makedirs(os.path.split(filename)[0])
         try:
