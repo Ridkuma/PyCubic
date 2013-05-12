@@ -21,13 +21,15 @@ class PyCubic:
     # Add the GraphWidget to display graph g
     def display_graph(self, g, layout=None):
         if layout == None:
-            layout = sfdp_layout(g)
-            self.graphWidget = GraphWidgetCustom(self, g, layout=layout)
-        elif layout != 'custom':
+            self.graphWidget = GraphWidgetCustom(self, g, layout=sfdp_layout(g))
+        elif layout != True:
             self.graphWidget = GraphWidgetCustom(self, g, layout=layout)
         # Custom layout, load it
         else:
-            self.graphWidget = GraphWidgetCustom(self, g, pos=g.vp["layout"])
+            try:
+                self.graphWidget = GraphWidgetCustom(self, g, pos=g.vp["layout"])
+            except KeyError: # just in case custom layout is invalid
+                self.graphWidget = GraphWidgetCustom(self, g, layout=sfdp_layout(g))
         self.graphWidget.show_all()
         self.graphFrame.add(self.graphWidget)
         
@@ -149,7 +151,7 @@ class PyCubic:
         try:
             g = load_graph(filename, fmt="xml")
             self.clear_graph()
-            self.display_graph(g, layout="custom")
+            self.display_graph(g, layout=True)
             self.update_statusbar("Layout " + layout_name + " loaded successfully.")
             self.layout_name = layout_name
             self.reset_buttons()
@@ -411,6 +413,14 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         temp_file.close()
         self.modified = False
         
+    # Convert self.g to graphML format in filename
+    def to_graphml(self, filename):
+        g = self.g.copy() # local copy of the graph
+        g.purge_vertices() # purge hidden vertices
+        self.g.vp["layout"] = self.pos
+        self.g.save(filename, "xml")           
+        self.modified = False
+        
     # Save layout to .layout file
     def save_layout(self, layout_name):
         filename = os.path.join(os.getcwd(), 'saved_layouts',
@@ -426,6 +436,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         if not layout_name in self.instance.layoutList:
             self.instance.layoutList[layout_name] = filename
             self.instance.treeStore.append(self.instance.layouts, [layout_name])
+        self.update_statusbar("Layout " + layout_name + " saved successfully.")
 
 class HelpWindow(Gtk.MessageDialog):
     
@@ -550,9 +561,10 @@ class Handler:
     # Filters for file selection in FileChooserDialog objects
     def add_filters(self, dialog):
         filter_graph = Gtk.FileFilter()
-        filter_graph.set_name("CUB or G6 files")
+        filter_graph.set_name("CUB, G6 or GraphML files")
         filter_graph.add_pattern("*.cub")
         filter_graph.add_pattern("*.g6")
+        filter_graph.add_pattern("*.graphml")
         dialog.add_filter(filter_graph)
     
         filter_cub = Gtk.FileFilter()
@@ -564,6 +576,11 @@ class Handler:
         filter_g6.set_name("G6 files")
         filter_g6.add_pattern("*.g6")
         dialog.add_filter(filter_g6)
+        
+        filter_graphml = Gtk.FileFilter()
+        filter_graphml.set_name("GraphML files")
+        filter_graphml.add_pattern("*.graphml")
+        dialog.add_filter(filter_graphml)
     
     # OpenCub Menu Item click handler
     def on_open_menu_activate(self, menuItem):
@@ -581,12 +598,16 @@ class Handler:
             
             (name, ext) = os.path.splitext(filename)
             try:
+                custom_layout = False
                 if '.cub' in ext:
                     with open(filename, 'rb') as f:
                         g = GraphFromFile.from_cub(f)
                 elif '.g6' in ext:
                     with open(filename, 'rb') as f:
                         g = GraphFromFile.from_g6(f)
+                elif '.graphml' in ext:
+                    g = load_graph(filename, "xml")
+                    custom_layout = True
                 else:
                     self.info_dialog("Wrong file format", "Only CUB and G6 files are currently supported.", filechooser)
                         
@@ -596,7 +617,10 @@ class Handler:
                 except AttributeError:
                     pass # No graph loaded yet, just pass
                                        
-                self.instance.display_graph(g)
+                if custom_layout:
+                    self.instance.display_graph(g, True)
+                else:
+                    self.instance.display_graph(g)
                 self.instance.filename = filename
                 self.instance.reset_buttons()
                 self.instance.update_statusbar("File " + os.path.basename(filename) + " loaded successfully.")
@@ -634,15 +658,16 @@ class Handler:
                     if '.cub' in ext:
                         with open(filename, 'wb') as f:
                             self.instance.graphWidget.to_cub(f)
-                            self.instance.update_statusbar("File " + os.path.basename(filename) + " saved successfully.")
                     elif '.g6' in ext:
                         with open(filename, 'wb') as f:
                              self.instance.graphWidget.to_g6(f)
-                             self.instance.update_statusbar("File " + os.path.basename(filename) + " saved successfully.")
+                    elif '.graphml' in ext:
+                        self.instance.graphWidget.to_graphml(filename)
                     else:
                         try_again = True
                         self.info_dialog("Wrong file format", "Only CUB and G6 files are currently supported.", filechooser)
-                            
+                    
+                    self.instance.update_statusbar("File " + os.path.basename(filename) + " saved successfully.")
                 except Exception as e:
                     logging.exception("Error {} while converting {}".format(e, filename))
                 
