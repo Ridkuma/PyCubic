@@ -16,12 +16,18 @@ class PyCubic:
         self.treeView = self.builder.get_object("graph_treeview")
         self.statusBar = self.builder.get_object("statusbar")
         self.update_statusbar("Welcome to PyCubic!")
+        self.treeView_menu = self.build_treeView_menu()
         
     # Add the GraphWidget to display graph g
-    def display_graph(self, g, layout = None):
-        if layout == None :
+    def display_graph(self, g, layout=None):
+        if layout == None:
             layout = sfdp_layout(g)
-        self.graphWidget = GraphWidgetCustom(self, g, layout)
+            self.graphWidget = GraphWidgetCustom(self, g, layout=layout)
+        elif layout != 'custom':
+            self.graphWidget = GraphWidgetCustom(self, g, layout=layout)
+        # Custom layout, load it
+        else:
+            self.graphWidget = GraphWidgetCustom(self, g, pos=g.vp["layout"])
         self.graphWidget.show_all()
         self.graphFrame.add(self.graphWidget)
         
@@ -29,32 +35,19 @@ class PyCubic:
     def clear_graph(self) :
         self.graphWidget.destroy()
         self.graphWidget = None
-        self.clear_treeStore()
     
-    # Save layout to .layout file
-    def save_layout(self, layout_name):
-        filename = os.path.join(os.getcwd(), 'saved_layouts',
-                                os.path.basename(os.path.splitext(self.filename)[0]),
-                                layout_name + '.layout')
-        if not os.path.exists(os.path.split(filename)[0]):
-            os.makedirs(os.path.split(filename)[0])
-        with open(filename, 'wb') as f:
-            try:
-                cPickle.dump(self.graphWidget, f)
-            except Exception as e:
-                logging.exception(e)
-        if not layout_name in self.layoutList:
-            self.layoutList[layout_name] = filename
-            self.treeStore.append(self.layouts, [layout_name])
-        
-    # Load layout from .layout file
-    def load_layout(self, layout_name):
-        filename = os.path.join(os.getcwd(), 'saved_layouts',
-                                os.path.basename(os.path.splitext(self.filename)[0]),
-                                layout_name + '.layout')
-        with open(filename, 'rb') as f:
-            self.graphWidget = cPickle.load(f)
-            
+    # Prepare the right click treeview menu
+    def build_treeView_menu(self):
+        treeView_menu = Gtk.Menu()
+        for icon, label, handler in [(Gtk.STOCK_EXECUTE, "Load", self.on_treeView_menu_load_button_handler),
+                               (Gtk.STOCK_DELETE, "Delete", self.on_treeView_menu_delete_button_handler)]:
+            menu_item = Gtk.ImageMenuItem(icon)
+            menu_item.set_label(label)
+            treeView_menu.append(menu_item)
+            menu_item.connect("activate", handler)
+            menu_item.show()
+        return treeView_menu
+    
     # Prepare and fill the Tree Store  
     def build_treeStore(self) :
         filename = os.path.splitext(os.path.basename(self.filename))[0]
@@ -81,6 +74,45 @@ class PyCubic:
         
         self.treeView.set_model(self.treeStore)
         self.treeView.expand_all()
+        
+        # Connect button-press-event to its handler
+        self.treeView.connect("button-press-event", self.on_treeview_button_press_event)
+   
+    # Button press event handler    
+    def on_treeview_button_press_event(self, treeview, event):
+        layout_clicked = False
+        x = int(event.x)
+        y = int(event.y)
+        time = event.time
+        pthinfo = treeview.get_path_at_pos(x, y)
+        if pthinfo is not None:
+            path, col, cellx, celly = pthinfo
+            treeview.grab_focus()
+            treeview.set_cursor(path, col, 0)
+            # Get label, but only if it's a layout
+            treeiter = self.treeStore.get_iter(path)
+            if self.treeStore.is_ancestor(self.layouts, treeiter):
+                layout_clicked = True
+                self.layout_name = self.treeStore.get_value(treeiter, 0)
+                self.treeiter = treeiter
+                
+        # If left clicking, load graph
+        if layout_clicked and event.button == 1:
+            self.load_layout(self.layout_name)
+        # If right clicking
+        elif layout_clicked and event.button == 3:
+            self.treeView_menu.popup(None, None, None, None, event.button, event.time)
+
+        return True
+        
+    # Right click menu "Load" handler
+    def on_treeView_menu_load_button_handler(self, menu_item):
+        self.load_layout(self.layout_name)
+
+    
+    # Right click menu "Delete" handler
+    def on_treeView_menu_delete_button_handler(self, menu_item):
+        self.delete_layout(self.layout_name)
     
     # Clear the current TreeStore and TreeViewColumns
     def clear_treeStore(self) :    
@@ -96,16 +128,58 @@ class PyCubic:
     def deactivate_widget(self, widgetName) :
         self.builder.get_object(widgetName).set_sensitive(False)
         
+    # Reset buttons when graph is loaded
+    def reset_buttons(self):
+        self.graphWidget.re_init()
+        self.activate_widget("save_layout_button")
+        self.activate_widget("save_menu")
+        self.activate_widget("exportPDF_menu")
+        self.activate_widget("layoutMenu")    
+        
     # Set the statusbar message to display
-    def update_statusbar(self, message) :
+    def update_statusbar(self, message):
         self.statusBar.pop(0)
         self.statusBar.push(0, message)
     
+    # Load layout layout_name from .layout file
+    def load_layout(self, layout_name):
+        filename = os.path.join(os.getcwd(), 'saved_layouts',
+                                os.path.basename(os.path.splitext(self.filename)[0]),
+                                layout_name + '.layout')
+        try:
+            g = load_graph(filename, fmt="xml")
+            self.clear_graph()
+            self.display_graph(g, layout="custom")
+            self.update_statusbar("Layout " + layout_name + " loaded successfully.")
+            self.layout_name = layout_name
+            self.reset_buttons()
+        except Exception as e:
+            logging.exception(e)
+    
+    # Delete layout layout_name
+    def delete_layout(self, layout_name):
+        filename = os.path.join(os.getcwd(), 'saved_layouts',
+                                os.path.basename(os.path.splitext(self.filename)[0]),
+                                layout_name + '.layout')
+        try:
+            os.remove(filename)
+            try:
+                os.rmdir(os.path.split(filename)[0])
+            except OSError:
+                pass # Directory not empty, pass
+            self.update_statusbar("Layout " + layout_name + " deleted successfully.")
+            self.treeStore.remove(self.treeiter)
+            del self.layoutList[layout_name]
+        except Exception as e:
+            logging.exception(e)
         
 class GraphWidgetCustom(graph_tool.draw.GraphWidget):
 
-    def __init__(self, instance, g, layout) :
-        super(GraphWidgetCustom, self).__init__(g, layout, update_layout = False)
+    def __init__(self, instance, g, pos=None, layout=None) :
+        if pos == None:
+            super(GraphWidgetCustom, self).__init__(g, layout, update_layout = False)
+        else:
+            super(GraphWidgetCustom, self).__init__(g, pos, update_layout = False)
         self.instance = instance
         self.modified = False
         self.theta = False
@@ -315,7 +389,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.instance.update_statusbar(algo.capitalize() + " layout applied.")
         
     # Convert self.g to CUB format in Python File Object f
-    def save2cub(self, f):
+    def to_cub(self, f):
         g = self.g.copy() # local copy of the graph
         g.purge_vertices() # purge hidden vertices
         
@@ -329,13 +403,29 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.modified = False
         
     # Convert self.g to G6 format in Python File Object f
-    def save2g6(self, f):
+    def to_g6(self, f):
         temp_file = tempfile.NamedTemporaryFile()
-        self.save2cub(temp_file)
+        self.to_cub(temp_file)
         temp_file.seek(0)
         cub2g6._convert(temp_file, f)
         temp_file.close()
         self.modified = False
+        
+    # Save layout to .layout file
+    def save_layout(self, layout_name):
+        filename = os.path.join(os.getcwd(), 'saved_layouts',
+                                os.path.basename(os.path.splitext(self.instance.filename)[0]),
+                                layout_name + '.layout')
+        if not os.path.exists(os.path.split(filename)[0]):
+            os.makedirs(os.path.split(filename)[0])
+        try:
+            self.g.vp["layout"] = self.pos
+            self.g.save(str(filename), fmt="xml")
+        except Exception as e:
+            logging.exception(e)
+        if not layout_name in self.instance.layoutList:
+            self.instance.layoutList[layout_name] = filename
+            self.instance.treeStore.append(self.instance.layouts, [layout_name])
 
 class HelpWindow(Gtk.MessageDialog):
     
@@ -379,14 +469,6 @@ class Handler:
         self.instance.deactivate_widget("save_menu")
         self.instance.deactivate_widget("exportPDF_menu")
         self.instance.deactivate_widget("layoutMenu")
-   
-    # Reset buttons when graph is loaded
-    def reset_buttons(self):
-        self.instance.graphWidget.re_init()
-        self.instance.activate_widget("save_layout_button")
-        self.instance.activate_widget("save_menu")
-        self.instance.activate_widget("exportPDF_menu")
-        self.instance.activate_widget("layoutMenu")
 
     # Snippet for one-liner info dialogs
     def info_dialog(self, title, message, parent=None):
@@ -434,7 +516,7 @@ class Handler:
         if layout_name != None:
             layout_name = layout_name.strip().replace(' ', '_')
             if layout_name != '':
-                self.instance.save_layout(layout_name)
+                self.instance.graphWidget.save_layout(layout_name)
                 # TODO refresh saved layout list
             else:
                 self.info_dialog("Error", "Invalid name", parent=instance.builder.get_object("MainWindow"))
@@ -510,12 +592,13 @@ class Handler:
                         
                 try:
                     self.instance.clear_graph() # Clear the graph
+                    self.instance.clear_treeStore()
                 except AttributeError:
                     pass # No graph loaded yet, just pass
                                        
                 self.instance.display_graph(g)
                 self.instance.filename = filename
-                self.reset_buttons()
+                self.instance.reset_buttons()
                 self.instance.update_statusbar("File " + os.path.basename(filename) + " loaded successfully.")
                 self.instance.build_treeStore()
             except Exception as e:
@@ -550,11 +633,11 @@ class Handler:
                 try:
                     if '.cub' in ext:
                         with open(filename, 'wb') as f:
-                            self.instance.graphWidget.save2cub(f)
+                            self.instance.graphWidget.to_cub(f)
                             self.instance.update_statusbar("File " + os.path.basename(filename) + " saved successfully.")
                     elif '.g6' in ext:
                         with open(filename, 'wb') as f:
-                             self.instance.graphWidget.save2g6(f)
+                             self.instance.graphWidget.to_g6(f)
                              self.instance.update_statusbar("File " + os.path.basename(filename) + " saved successfully.")
                     else:
                         try_again = True
