@@ -65,7 +65,7 @@ class PyCubic:
                     self.layoutList[name] = os.path.join(root, file)
                     self.treeStore.append(self.layouts, [name])
         pmatchings = self.treeStore.append(None, ["Perfect matchings"])
-        self.treeStore.append(pmatchings, ["Unknown"])
+        self.treeStore.append(pmatchings, ["Unknown"]) # TODO
         
         # Generate the layout for this model
         treeviewcolumn = Gtk.TreeViewColumn(filename)
@@ -143,7 +143,7 @@ class PyCubic:
         self.statusBar.pop(0)
         self.statusBar.push(0, message)
     
-    # Load layout layout_name from .layout file
+    # Load layout layout_name from .graphml file
     def load_layout(self, layout_name):
         filename = os.path.join(os.getcwd(), 'saved_layouts',
                                 os.path.basename(os.path.splitext(self.filename)[0]),
@@ -162,7 +162,7 @@ class PyCubic:
     def delete_layout(self, layout_name):
         filename = os.path.join(os.getcwd(), 'saved_layouts',
                                 os.path.basename(os.path.splitext(self.filename)[0]),
-                                layout_name + '.layout')
+                                layout_name + '.graphml')
         try:
             os.remove(filename)
             try:
@@ -421,7 +421,7 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
         self.g.save(filename, "xml")           
         self.modified = False
         
-    # Save layout to .layout file
+    # Save layout to .graphml file
     def save_layout(self, layout_name):
         filename = os.path.join(os.getcwd(), 'saved_layouts',
                                 os.path.basename(os.path.splitext(self.instance.filename)[0]),
@@ -435,8 +435,9 @@ class GraphWidgetCustom(graph_tool.draw.GraphWidget):
             logging.exception(e)
         if not layout_name in self.instance.layoutList:
             self.instance.layoutList[layout_name] = filename
-            self.instance.treeStore.append(self.instance.layouts, [layout_name])
-        self.update_statusbar("Layout " + layout_name + " saved successfully.")
+            treeiter = self.instance.treeStore.append(self.instance.layouts, [layout_name])
+            self.instance.treeView.expand_to_path(self.instance.treeStore.get_path(treeiter))
+        self.instance.update_statusbar("Layout " + layout_name + " saved successfully.")
 
 class HelpWindow(Gtk.MessageDialog):
     
@@ -521,8 +522,12 @@ class Handler:
     
     # Save layout button click handler
     def on_save_layout_button_clicked(self, button):
+        try:
+            default_input = self.instance.layout_name
+        except AttributeError:
+            default_input="awesome_snark"
         layout_name = self.input_dialog("Choose layout name",
-                                        default_input="awesome_snark",
+                                        default_input,
                                         parent=instance.builder.get_object("MainWindow"))
         if layout_name != None:
             layout_name = layout_name.strip().replace(' ', '_')
@@ -667,6 +672,9 @@ class Handler:
                         try_again = True
                         self.info_dialog("Wrong file format", "Only CUB and G6 files are currently supported.", filechooser)
                     
+                    self.instance.filename = filename
+                    self.instance.clear_treeStore()
+                    self.instance.build_treeStore()
                     self.instance.update_statusbar("File " + os.path.basename(filename) + " saved successfully.")
                 except Exception as e:
                     logging.exception("Error {} while converting {}".format(e, filename))
