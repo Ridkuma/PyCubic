@@ -49,11 +49,12 @@
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="exportPDF_menu">
-                        <property name="label" translatable="yes">Export as PDF</property>
+                        <property name="label" translatable="yes">Export</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="image">image5</property>
                         <property name="use_stock">False</property>
+                        <signal name="activate" handler="on_export_menu_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
