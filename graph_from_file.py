@@ -1,8 +1,13 @@
-from graph_tool.all import *
+#-*- coding:utf-8 -*-
+"""Graph from file creation"""
+
 import g62cub
 import tempfile
+from graph_tool.all import *
 
 class GraphFromFile:
+    """Static class for graph generation from file"""
+    
     @classmethod
     def from_cub(cls, cub_file):
         """Convert a CUB Python File Object and return a graph-tool Graph Object"""

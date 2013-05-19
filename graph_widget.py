@@ -1,11 +1,24 @@
-from graph_tool.all import *
-import cub2g6
+#-*- coding:utf-8 -*-
+"""Custom GraphWidget implementation
+
+Display the graph using GTK and handle graph modifications and save.
+
+"""
+
 import os
 import logging
+from graph_tool.all import *
+import cub2g6
 
 class GraphWidget(graph_tool.draw.GraphWidget):
+    """GTK widget displaying a graph
+    
+    Inherit from graph_tool.draw.GraphWidget
+    
+    """
 
     def __init__(self, instance, g, pos=None, layout=None) :
+        """GraphWidget creation"""
         if pos == None:
             super(GraphWidget, self).__init__(g, layout, update_layout = False)
         else:
@@ -24,9 +37,9 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         self.newVertex2 = None
         self.rollbackEdge = None
     
-    # Custom Button Press Event, implementing Theta operations
     def button_press_event(self, widget, event):
-        # Desactivate Layout Changing (or the prop map pointers will derpyderp)
+        """Implement Theta operations"""
+        # Desactivate Layout Changing (or the prop map pointers will go nuts)
         self.instance.deactivate_widget("layoutMenu")
         
         # Theta operation handler
@@ -152,29 +165,28 @@ class GraphWidget(graph_tool.draw.GraphWidget):
             super(GraphWidget, self).button_press_event(widget, event)
             self.instance.update_statusbar("Ready.")
     
-    # Theta clicked
     def theta_clicked(self):
+        """Set Theta state"""
         self.instance.deactivate_widget("theta_button")
         self.instance.deactivate_widget("thetaMinus_button")
         self.instance.activate_widget("cancel_button")
         self.theta = True
     
-    # ThetaMinus clicked
-    def thetaMinus_clicked(self):      
+    def thetaMinus_clicked(self): 
+        """Set ThetaMinus state"""     
         self.instance.deactivate_widget("theta_button")
         self.instance.deactivate_widget("thetaMinus_button")
         self.instance.activate_widget("cancel_button")
         self.thetaMinus = True
       
-          
-    # Reactivate Theta and ThetaMinus buttons
     def reactivate_operations(self):
+        """Reset buttons to original state"""
         self.instance.activate_widget("theta_button")
         self.instance.activate_widget("thetaMinus_button")
         self.instance.deactivate_widget("cancel_button")
         
-    # Cancel all current operations
     def cancel_operations(self):
+        """Cancel all current operations"""
         if self.newVertex1 != None :
             self.g.clear_vertex(self.newVertex1)
             self.g.remove_vertex(self.newVertex1)
@@ -182,8 +194,8 @@ class GraphWidget(graph_tool.draw.GraphWidget):
             self.g.add_edge(self.rollbackEdge[0], self.rollbackEdge[1])
         self.re_init()
         
-    # Reinit widget
     def re_init(self) :
+        """Reinitialize widget"""
         self.reactivate_operations()
         self.theta = False
         self.thetaMinus = False
@@ -193,8 +205,8 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         self.newVertex2 = None
         self.rollbackEdge = None
         
-    # Change parameters if the graph has been modified
     def set_to_modified(self):
+        """Set graph state to "modified" to avoid problems"""
         self.modified = True
         filename = self.instance.filename
         name, ext = os.path.splitext(os.path.basename(filename))
@@ -204,8 +216,13 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         self.instance.build_treeStore()
         
             
-    # Dynamically change the graph layout with various algorithms
-    def change_default_layout(self, algo) :
+    def change_default_layout(self, algo):
+        """Dynamically change the graph layout using algo
+        
+        Arguments:
+        algo -- string of ['random', 'sfdp', 'arf', 'fruchter']
+        
+        """
         if algo == "random" :
             self.pos = random_layout(self.g)
         elif algo == "sfdp" :
@@ -218,8 +235,8 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         self.fit_to_window()
         self.instance.update_statusbar(algo.capitalize() + " layout applied.")
         
-    # Convert self.g to CUB format in Python File Object f
     def to_cub(self, f):
+        """Save current graph to CUB format in file object f"""
         g = self.g.copy() # local copy of the graph
         g.purge_vertices() # purge hidden vertices
         
@@ -231,9 +248,9 @@ class GraphWidget(graph_tool.draw.GraphWidget):
             f.write(line + '\n')
             
         self.modified = False
-        
-    # Convert self.g to G6 format in Python File Object f
+
     def to_g6(self, f):
+        """Save current graph to G6 format in file object f"""
         temp_file = tempfile.NamedTemporaryFile()
         self.to_cub(temp_file)
         temp_file.seek(0)
@@ -241,8 +258,8 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         temp_file.close()
         self.modified = False
         
-    # Convert self.g to graphML format in filename
     def to_graphml(self, filename):
+        """Save current graph to GraphML format in file f"""
         g = self.g.copy() # local copy of the graph
         g.purge_vertices() # purge hidden vertices
         self.g.vp["layout"] = self.pos
@@ -251,12 +268,19 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         
     # Export self.g to filename
     def export(self, filename, quality):
+        """Export current graph to PDF/PS/SVG/PNG depending of filename and quality
+        
+        Arguments:
+        filename -- string, where to export the graph
+        quality -- tuple of integers, quality of the export
+        
+        """
         g = self.g.copy() # local copy of the graph
         g.purge_vertices() # purge hidden vertices
         graph_draw(g, pos=self.pos, output=filename, output_size=quality)
         
-    # Save layout to .graphml file
     def save_layout(self, layout_name):
+        """Save current layout to GraphML format in file layout_name and update TreeView"""
         filename = os.path.join(os.getcwd(), 'saved_layouts',
                                 os.path.basename(os.path.splitext(self.instance.filename)[0]),
                                 layout_name + '.graphml')

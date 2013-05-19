@@ -29,13 +29,11 @@ def _convert(cub_file, g6_file):
     command = header + s[1:len(s)-2] + '.'
 
     # dreadnaut temp file creation 
-
     temp = tempfile.NamedTemporaryFile()
     temp.write(command)
     temp.flush()
 
     # dreadnaut to G6 conversion
-    # Works on Unix, TODO : Adapt for Windows
     subprocess.call("dretog " + temp.name + " \"" + 
                     g6_file.name + "\" ", shell = True)
 

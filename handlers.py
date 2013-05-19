@@ -1,12 +1,16 @@
-from gi.repository import Gtk
-from graph_from_file import GraphFromFile
-from help_window import HelpWindow
+#-*- coding:utf-8 -*-
+"""GTK handlers connected to .glade file"""
+
 import os
 import logging
+from gi.repository import Gtk
+from graph_from_file import GraphFromFile
 
 class Handlers:
+    """Regroup the handlers connected to .glade"""
 
     def __init__(self, instance) :
+        """Initialize the handlers and deactivate all necessary buttons"""
         self.instance = instance
         # Deactivate all necessary buttons until a graph is loaded
         self.instance.deactivate_widget("save_layout_button")
@@ -18,17 +22,36 @@ class Handlers:
         self.instance.deactivate_widget("layoutMenu")
 
     # Snippet for one-liner info dialogs
-    def info_dialog(self, title, message, parent=None):
+    def info_dialog(self, title, message, parent=None, msg_type=Gtk.MessageType.WARNING):
+        """Display a dialog with title and message.
+        
+        Arguments:
+        title -- string, the title of the dialog
+        message -- string, the message of the dialog
+        
+        Keyword arguments:
+        parent -- the GTK parent to which attach the dialog
+        msg_type -- the GTK.MessageType to use
+        
+        """
         info_dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                                                Gtk.MessageType.WARNING, Gtk.ButtonsType.CLOSE,
+                                                msg_type, Gtk.ButtonsType.CLOSE,
                                                 title)
         info_dialog.format_secondary_text(message)
         info_dialog.run()
         info_dialog.destroy()
 
-    # Snipper for one-liner input dialog
     def input_dialog(self, title, default_input="", parent=None):
-        """Display a dialog with a text entry. Return the text, or None if canceled."""
+        """Display a dialog with message title. Return the text, or None if canceled.
+        
+        Arguments:
+        title -- string, the title of the dialog
+        
+        Keyword arguments:
+        default_input -- the default string in the entry box
+        parent -- the GTK parent to which attach the dialog
+        
+        """
         input_dialog = Gtk.MessageDialog(parent,
                               Gtk.DialogFlags.MODAL,
                               Gtk.MessageType.OTHER,
@@ -49,14 +72,12 @@ class Handlers:
         else:
             return None
 
-    # Main window delete handler
     def onDeleteWindow(self, *windows):
+        """Main window delete handler"""
         Gtk.main_quit(*windows)
         
-    ## BUTTON HANDLERS ##
-    
-    # Save layout button click handler
     def on_save_layout_button_clicked(self, button):
+        """Save layout button click handler"""
         try:
             default_input = self.instance.layout_name
         except AttributeError:
@@ -71,34 +92,47 @@ class Handlers:
             else:
                 self.info_dialog("Error", "Invalid name", parent=self.instance.builder.get_object("MainWindow"))
         
-    # Theta button click handler
     def on_theta_button_clicked(self, button):
+        """Theta button click handler"""
         logging.debug("Theta button clicked")
         self.instance.update_statusbar("Theta operation. Please pick a vertex.")
         self.instance.graphWidget.theta_clicked()
             
         
-    # ThetaMinus button click handler
     def on_thetaMinus_button_clicked(self, button):
+        """ThetaMinus button click handler"""
         logging.debug("Theta Minus button clicked")
         self.instance.update_statusbar("ThetaMinus operation. Please pick a vertex.")
         self.instance.graphWidget.thetaMinus_clicked()
         
-    # Cancel button click handler
     def on_cancel_button_clicked(self, button):
+        """Cancel button click handler"""
         logging.debug("Cancel")
         self.instance.update_statusbar("Operations cancelled.")
         self.instance.graphWidget.cancel_operations()
         
-
-    # Help button click handler
     def on_help_button_clicked(self, button):
-        self.helpWindow = HelpWindow()
+        """Help button click handler"""
+        info_dialog = self.info_dialog("Graph manipulation shortcuts", """ 
+        Select vertice: Left Click
         
-    ## MENU HANDLERS ##
-    
-    # Filters for file selection in FileChooserDialog objects
+        Unselect: Right Click
+        
+        Select multiple vertices: Maj + Left click dragging
+        
+        Move vertice: Left Click dragging
+        
+        Pan graph: Middle Click dragging / Ctrl + Left Click dragging
+        
+        Zoom (no vertice scaling): Mouse scroll
+        
+        Zoom (with vertice scaling): Maj + Mouse scroll
+        
+        Rotate: Ctrl + Mouse scroll
+        """, msg_type=Gtk.MessageType.INFO)
+        
     def add_filters(self, dialog):
+        """Graph filters for file selection in FileChooserDialog objects"""
         filter_graph = Gtk.FileFilter()
         filter_graph.set_name("CUB, G6 or GraphML files")
         filter_graph.add_pattern("*.cub")
@@ -120,9 +154,9 @@ class Handlers:
         filter_graphml.set_name("GraphML files")
         filter_graphml.add_pattern("*.graphml")
         dialog.add_filter(filter_graphml)
-    
-    # OpenCub Menu Item click handler
+
     def on_open_menu_activate(self, menuItem):
+        """OpenCub Menu Item click handler"""
         logging.debug("Opening a file")
         filechooser = Gtk.FileChooserDialog("Open a file", None, Gtk.FileChooserAction.OPEN,
                                        (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
@@ -176,9 +210,8 @@ class Handlers:
 
         filechooser.destroy()
     
-        
-    # Save Menu Item click handler
     def on_save_menu_activate(self, menuItem):
+        """Save Menu Item click handler"""
         logging.debug("Saving to a file")
         filechooser = Gtk.FileChooserDialog("Save a file", None, Gtk.FileChooserAction.SAVE,
                                        (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
@@ -223,8 +256,8 @@ class Handlers:
 
         filechooser.destroy()
     
-    # Export Item click handler
     def on_export_menu_activate(self, menuItem):
+        """Export Menu Item click handler"""
         logging.debug("Exporting to a file")
         filechooser = Gtk.FileChooserDialog("Export graph", None, Gtk.FileChooserAction.SAVE,
                                        (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
@@ -305,29 +338,29 @@ class Handlers:
                 logging.debug("Cancelling")
 
         filechooser.destroy()
-    
-    # Quit Menu Item click handler
+
     def on_quit_menu_activate(self, menuItem):
+        """Quit Menu Item click handler"""
         Gtk.main_quit(menuItem)
         
-    # Random Layout Menu click handler
     def on_random_menu_activate(self, menuItem):
+        """Random Layout Menu click handler"""
         self.instance.graphWidget.change_default_layout("random")
-        
-    # SFDP Layout Menu click handler
+
     def on_sfdp_menu_activate(self, menuItem):
+        """SFDP Layout Menu click handler"""
         self.instance.graphWidget.change_default_layout("sfdp")
-        
-    # ARF Layout Menu click handler
+
     def on_arf_menu_activate(self, menuItem):
+        """ARF Layout Menu click handler"""
         self.instance.graphWidget.change_default_layout("arf")
-        
-    # Fruchter Layout Menu click handler
+
     def on_fruchter_menu_activate(self, menuItem):
+        """Fruchter Layout Menu click handler"""
         self.instance.graphWidget.change_default_layout("fruchter")
-        
-    # About Menu Item click handler
+
     def on_about_menu_activate(self, menuItem):
+        """About Menu Item click handler"""
         self.aboutdialog = self.instance.builder.get_object("about_dialog")
         self.aboutdialog.run()
         self.aboutdialog.hide()

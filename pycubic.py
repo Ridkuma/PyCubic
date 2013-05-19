@@ -1,12 +1,17 @@
+#-*- coding:utf-8 -*-
+"""PyCubic main window"""
+
+import os
+import logging
 from gi.repository import Gtk
 from graph_tool.all import *
 from graph_widget import GraphWidget
-import os
-import logging
 
 class PyCubic:
+    """Main window"""
 
     def __init__(self):
+        """Create a PyCubic instance"""
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file("PyCubic.glade")
@@ -16,14 +21,22 @@ class PyCubic:
         self.update_statusbar("Welcome to PyCubic!")
         self.treeView_menu = self.build_treeView_menu()
         
-    # Add the GraphWidget to display graph g
     def display_graph(self, g, layout=None):
-        if layout == None:
+        """Load GraphWidget and display graph g using layout (if available)
+        
+        Arguments:
+        g -- a graph_tool.Graph
+        
+        Keyword arguments:
+        layout -- a graph_tool.PropertyMap to be applied to the widget.
+                  If True, loads a custom PropertyMap from layout file
+        
+        """
+        if layout == None: # Generate a SFDP layout
             self.graphWidget = GraphWidget(self, g, layout=sfdp_layout(g))
-        elif layout != True:
+        elif layout != True: # Load given PropertyMap
             self.graphWidget = GraphWidget(self, g, layout=layout)
-        # Custom layout, load it
-        else:
+        else: # Custom layout, load it
             try:
                 self.graphWidget = GraphWidget(self, g, pos=g.vp["layout"])
             except KeyError: # just in case custom layout is invalid
@@ -31,13 +44,13 @@ class PyCubic:
         self.graphWidget.show_all()
         self.graphFrame.add(self.graphWidget)
         
-    # Clear the current graph
     def clear_graph(self) :
+        """Clear GraphWidget"""
         self.graphWidget.destroy()
         self.graphWidget = None
     
-    # Prepare the right click treeview menu
     def build_treeView_menu(self):
+        """Return the treeview right-click menu"""
         treeView_menu = Gtk.Menu()
         for icon, label, handler in [(Gtk.STOCK_EXECUTE, "Load", self.on_treeView_menu_load_button_handler),
                                (Gtk.STOCK_DELETE, "Delete", self.on_treeView_menu_delete_button_handler)]:
@@ -48,18 +61,18 @@ class PyCubic:
             menu_item.show()
         return treeView_menu
     
-    # Prepare and fill the Tree Store  
     def build_treeStore(self) :
+        """Prepare and fill the TreeStore"""
         filename = os.path.splitext(os.path.basename(self.filename))[0]
         self.treeStore = Gtk.TreeStore(str)
     
         # Fill the Tree Store   
         self.layoutList = dict()
         self.layouts = self.treeStore.append(None, ["Saved layouts"])
-        for root, dirs, files in os.walk(os.path.join(os.getcwd(), "saved_layouts", filename)) :
+        for root, dirs, files in os.walk(os.path.join(os.getcwd(), "saved_layouts", filename)):
             for file in files :
                 (name, ext) = os.path.splitext(file)
-                if ext == ".graphml" :
+                if ext == ".graphml":
                     self.layoutList[name] = os.path.join(root, file)
                     self.treeStore.append(self.layouts, [name])
         pmatchings = self.treeStore.append(None, ["Perfect matchings"])
@@ -77,9 +90,9 @@ class PyCubic:
         
         # Connect button-press-event to its handler
         self.treeView.connect("button-press-event", self.on_treeview_button_press_event)
-   
-    # Button press event handler    
+       
     def on_treeview_button_press_event(self, treeview, event):
+        """Handle TreeView interactions"""
         layout_clicked = False
         x = int(event.x)
         y = int(event.y)
@@ -102,47 +115,45 @@ class PyCubic:
         # If right clicking
         elif layout_clicked and event.button == 3:
             self.treeView_menu.popup(None, None, None, None, event.button, event.time)
-
         return True
         
-    # Right click menu "Load" handler
     def on_treeView_menu_load_button_handler(self, menu_item):
+        """Right-click menu "Load" button handler"""
         self.load_layout(self.layout_name)
 
-    
-    # Right click menu "Delete" handler
     def on_treeView_menu_delete_button_handler(self, menu_item):
+        """Right-click menu "Delete" button handler"""
         self.delete_layout(self.layout_name)
     
-    # Clear the current TreeStore and TreeViewColumns
-    def clear_treeStore(self) :    
+    def clear_treeStore(self) :
+        """Clear TreeStore and TreeViewColumns"""
         self.treeStore = Gtk.TreeStore(str)
-        for column in self.treeView.get_columns() :
+        for column in self.treeView.get_columns():
             self.treeView.remove_column(column)
         
-    # Set a widget to sensitive
-    def activate_widget(self, widgetName) :
+    def activate_widget(self, widgetName):
+        """Set widgetName to sensitive"""
         self.builder.get_object(widgetName).set_sensitive(True)
         
-    # Set a widget to insensitive
-    def deactivate_widget(self, widgetName) :
+    def deactivate_widget(self, widgetName):
+        """Set widgetName to insensitive"""
         self.builder.get_object(widgetName).set_sensitive(False)
         
-    # Reset buttons when graph is loaded
     def reset_buttons(self):
+        """Reset all buttons to default state"""
         self.graphWidget.re_init()
         self.activate_widget("save_layout_button")
         self.activate_widget("save_menu")
         self.activate_widget("exportPDF_menu")
         self.activate_widget("layoutMenu")    
         
-    # Set the statusbar message to display
     def update_statusbar(self, message):
+        """Update statusbar with message"""
         self.statusBar.pop(0)
         self.statusBar.push(0, message)
     
-    # Load layout layout_name from .graphml file
     def load_layout(self, layout_name):
+        """Load graph layout from layout_name corresponding .graphml file"""
         filename = os.path.join(os.getcwd(), 'saved_layouts',
                                 os.path.basename(os.path.splitext(self.filename)[0]),
                                 layout_name + '.graphml')
@@ -156,8 +167,8 @@ class PyCubic:
         except Exception as e:
             logging.exception(e)
     
-    # Delete layout layout_name
     def delete_layout(self, layout_name):
+        """Delete layout_name corresponding .graphml file"""
         filename = os.path.join(os.getcwd(), 'saved_layouts',
                                 os.path.basename(os.path.splitext(self.filename)[0]),
                                 layout_name + '.graphml')
