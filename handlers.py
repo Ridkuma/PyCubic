@@ -1,5 +1,10 @@
 #-*- coding:utf-8 -*-
-"""GTK handlers connected to .glade file"""
+"""GTK handlers connected to .glade file
+
+Define all the handlers of objects integrated in the .glade architecture file.
+Responsible for all the dialogs.
+
+"""
 
 import os
 import logging
@@ -10,7 +15,10 @@ class Handlers:
     """Regroup the handlers connected to .glade"""
 
     def __init__(self, instance) :
-        """Initialize the handlers and deactivate all necessary buttons"""
+        """Initialize the handlers and deactivate all necessary buttons
+        
+        Arguments:
+        intance -- the PyCubic object to which the handler should be connected"""
         self.instance = instance
         # Deactivate all necessary buttons until a graph is loaded
         self.instance.deactivate_widget("save_layout_button")
@@ -30,8 +38,8 @@ class Handlers:
         message -- string, the message of the dialog
         
         Keyword arguments:
-        parent -- the GTK parent to which attach the dialog
-        msg_type -- the GTK.MessageType to use
+        parent -- the GTK parent to which attach the dialog (default: None)
+        msg_type -- the GTK.MessageType to use (default: Gtk.MessageType.WARNING)
         
         """
         info_dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT,
@@ -48,8 +56,8 @@ class Handlers:
         title -- string, the title of the dialog
         
         Keyword arguments:
-        default_input -- the default string in the entry box
-        parent -- the GTK parent to which attach the dialog
+        default_input -- the default string in the entry box (default: "")
+        parent -- the GTK parent to which attach the dialog (default: None)
         
         """
         input_dialog = Gtk.MessageDialog(parent,
@@ -132,7 +140,12 @@ class Handlers:
         """, msg_type=Gtk.MessageType.INFO)
         
     def add_filters(self, dialog):
-        """Graph filters for file selection in FileChooserDialog objects"""
+        """Set CUB/G6/GraphML file filters for FileChooserDialog dialog
+        
+        Arguments:
+        dialog - FileChooserDialog instance to which attach the filters
+        
+        """
         filter_graph = Gtk.FileFilter()
         filter_graph.set_name("CUB, G6 or GraphML files")
         filter_graph.add_pattern("*.cub")
@@ -326,10 +339,8 @@ class Handlers:
                     
                     if not saved:
                         try_again = True                    
-                    
-                    elif not valid:
-                        try_again = True
-                        self.info_dialog("Wrong file format", "Only PDF, PS, SVG and PNG files are currently supported for exporting.", filechooser)
+                        if not valid:
+                            self.info_dialog("Wrong file format", "Only PDF, PS, SVG and PNG files are currently supported for exporting.", filechooser)
                     
                 except Exception as e:
                     logging.exception("Error {} while exporting {}".format(e, filename))

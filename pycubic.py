@@ -1,5 +1,9 @@
 #-*- coding:utf-8 -*-
-"""PyCubic main window"""
+"""PyCubic main window
+
+Main object of the package, contains all the subwindows of the interface
+
+"""
 
 import os
 import logging
@@ -11,7 +15,7 @@ class PyCubic:
     """Main window"""
 
     def __init__(self):
-        """Create a PyCubic instance"""
+        """Create a PyCubic window instance"""
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file("PyCubic.glade")
@@ -28,7 +32,7 @@ class PyCubic:
         g -- a graph_tool.Graph
         
         Keyword arguments:
-        layout -- a graph_tool.PropertyMap to be applied to the widget.
+        layout -- a graph_tool.PropertyMap to be applied to the widget (default: None)
                   If True, loads a custom PropertyMap from layout file
         
         """
@@ -45,7 +49,7 @@ class PyCubic:
         self.graphFrame.add(self.graphWidget)
         
     def clear_graph(self) :
-        """Clear GraphWidget"""
+        """Clear the GraphWidget and its graph"""
         self.graphWidget.destroy()
         self.graphWidget = None
     

@@ -2,6 +2,12 @@
 #-*- coding:utf-8 -*-
 """G6 to CUB file(s) conversion tool
 
+Usage: g62cub FILE [FILE]... [DEST]
+FILE can either be a G6 file or a ZIP containing G6 files.
+DEST, if present, specifies the path where to save the converted file(s).
+
+Beware, DEST must be present if there are multiple FILE.
+
 """
 
 import re, os, sys, tempfile, subprocess, zlib, zipfile, logging
@@ -48,7 +54,9 @@ def main(file, save_path=os.getcwd()):
     """Convert a G6 file or zipped G6 files to CUB file(s)
     Arguments:
     file (string) -- filename of the file to convert
-    save_path (string) -- where to save the CUB files, defaults to current working directory
+    
+    Keyword arguments:
+    save_path (string) -- where to save the CUB files (default: current working directory)
     
     """
     

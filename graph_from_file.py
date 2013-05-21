@@ -1,5 +1,10 @@
 #-*- coding:utf-8 -*-
-"""Graph from file creation"""
+"""Graph from file creation
+
+Return a graph_tool.Graph from either CUB or G6 files.
+Call g62cub.py for G6 format support.
+
+"""
 
 import g62cub
 import tempfile
@@ -10,7 +15,7 @@ class GraphFromFile:
     
     @classmethod
     def from_cub(cls, cub_file):
-        """Convert a CUB Python File Object and return a graph-tool Graph Object"""
+        """Convert a CUB Python File Object cub_file and return a graph_tool.Graph Object"""
         # Get number of vertices
         n = int(cub_file.readline())
         
@@ -35,7 +40,7 @@ class GraphFromFile:
 
     @classmethod
     def from_g6(cls, g6_file):
-        """Convert a G6 Python File Object and return a graph-tool Graph Object"""
+        """Convert a G6 Python File Object g6_file and return a graph_tool.Graph Object"""
         temp_file = tempfile.NamedTemporaryFile()
         g62cub._convert(g6_file, temp_file)
         temp_file.seek(0)

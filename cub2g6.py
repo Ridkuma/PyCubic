@@ -2,6 +2,17 @@
 #-*- coding:utf-8 -*-
 """CUB to G6 file(s) conversion tool
 
+Usage: cub2g6 FILE [FILE]... [DEST]
+       cub2g6 -z FOLDER [FOLDER]... [DEST]
+FILE can either be a CUB file or a folder containing CUB files.
+FOLDER is a folder containing CUB files.
+DEST, if present, specifies the path where to save the converted file(s).
+
+Beware, DEST must be present if there are multiple FILE/FOLDER.
+
+Options:
+-z: convert the files in FOLDER and save as a ZIP file
+
 """
 
 import subprocess, tempfile, os, sys, zlib, zipfile, logging
@@ -13,7 +24,6 @@ def _convert(cub_file, g6_file):
     n = int(cub_file.readline())
 
     # dreadnaut commands generation
-
     # Header, only consists in declaring the number of vertices
     header = "n=" + str(n) + '\n'
 
@@ -44,9 +54,11 @@ def main(file, zip=False, save_path=os.getcwd()):
     """Convert a CUB file or a folder to G6 file(s) or ZIP
     Arguments:
     file (string) -- filename of the file (or folder) to convert
+    
+    Keyword arguments:
     zip (boolean) -- used only if file is a folder, choose if converted files must
-                     be zipped or saved directly in save_path, defaults to False
-    save_path (string) -- where to save the G6 files, defaults to current working directory
+                     be zipped or saved directly in save_path (default: False)
+    save_path (string) -- where to save the G6 files (default: current working directory)
     
     """
     

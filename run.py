@@ -1,6 +1,10 @@
 #!/usr/bin/python
 #-*- coding:utf-8 -*-
-"""PyCubic run script"""
+"""PyCubic run script
+
+Create a PyCubic instance, connect it to its handlers and run the main GTK window.
+
+"""
 
 from gi.repository import Gtk
 from pycubic import PyCubic

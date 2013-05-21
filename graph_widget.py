@@ -2,6 +2,7 @@
 """Custom GraphWidget implementation
 
 Display the graph using GTK and handle graph modifications and save.
+Call cub2g6.py for G6 file format save.
 
 """
 
@@ -11,9 +12,9 @@ from graph_tool.all import *
 import cub2g6
 
 class GraphWidget(graph_tool.draw.GraphWidget):
-    """GTK widget displaying a graph
+    """GTK widget displaying a graph.
     
-    Inherit from graph_tool.draw.GraphWidget
+    Inherit from graph_tool.draw.GraphWidget.
     
     """
 
