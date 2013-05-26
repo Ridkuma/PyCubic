@@ -1,15 +1,38 @@
 PyCubic - A Python interface for cubic graphs manipulation
 
-To run, either use:
-    python run.py
+Run the application:
+    $ python run.py
+
+Prerequisites and installation:
+    * Python 2.7+: http://www.python.org/download/releases/2.7.5/
+                   (should already be installed under Unix)
+    * nauty and Traces programs: http://cs.anu.edu.au/~bdm/nauty/
+    * graph-tool library: http://projects.skewed.de/graph-tool/
+
+    Example for Debian, DISTRIBUTION being replaced by squeeze or sid:
+    $ apt-get install nauty
+    $ vim /etc/apt/sources.list
+    # Add the following lines, replacing DISTRIBUTION
+    deb http://downloads.skewed.de/apt/DISTRIBUTION DISTRIBUTION main
+    deb-src http://downloads.skewed.de/apt/DISTRIBUTION DISTRIBUTION main
+    # Save file
+    $ apt-get update
+    $ apt-get install python-graph-tool
     
-Or:
-    chmod +x run.py (only once)
-    ./run.py
-
-
+    Example for Ubuntu, DISTRIBUTION being replaced by raring, quantal,
+    precise, oneiric, natty or maverick:
+    $ apt-get install nauty
+    $ vim /etc/apt/sources.list
+    # Add the following lines, replacing DISTRIBUTION
+    deb http://downloads.skewed.de/apt/DISTRIBUTION DISTRIBUTION universe
+    deb-src http://downloads.skewed.de/apt/DISTRIBUTION DISTRIBUTION universe
+    # Save file
+    $ apt-get update
+    $ apt-get install python-graph-tool
+    
+    
 Documentation:
-    User and technical documentation is available under the "doc" directory.
+    Technical documentation is available under the "doc" directory.
 
     
 Authors:
