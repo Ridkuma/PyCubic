@@ -3,6 +3,7 @@ PyCubic - A Python interface for cubic graphs manipulation
 Run the application:
     $ python run.py
 
+    
 Prerequisites and installation:
     * Python 2.7+: http://www.python.org/download/releases/2.7.5/
                    (should already be installed under Unix)
