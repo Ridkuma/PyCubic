@@ -8,6 +8,7 @@ Call cub2g6.py for G6 file format save.
 
 import os
 import logging
+import tempfile
 from graph_tool.all import *
 import cub2g6
 

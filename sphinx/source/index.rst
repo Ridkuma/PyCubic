@@ -9,7 +9,7 @@ Welcome to PyCubic's documentation!
 Practical Studies team project at INSA of Rennes, PyCubic is developed for mathematicians working with cubic graphs theory.
 
 The software is able to display cubic graphs, edit them through various operations, and save them in compressed graph6 (.G6) format.
-It can also be used to save and later display certain layouts for graphs.
+It can also be used to compute, interactively edit, save and later display certain layouts for graphs.
 
 .. toctree::
    :maxdepth: 2
