@@ -51,7 +51,9 @@ def _convert(cub_file, g6_file):
 
 
 def main(file, zip=False, save_path=os.getcwd()):
-    """Convert a CUB file or a folder to G6 file(s) or ZIP
+    """main(file, zip=False, save_path=os.getcwd())
+    
+    Convert a CUB file or a folder to G6 file(s) or ZIP
     Arguments:
     file (string) -- filename of the file (or folder) to convert
     

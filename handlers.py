@@ -31,7 +31,9 @@ class Handlers:
 
     # Snippet for one-liner info dialogs
     def info_dialog(self, title, message, parent=None, msg_type=Gtk.MessageType.WARNING):
-        """Display a dialog with title and message.
+        """info_dialog(self, title, message, parent=None, msg_type=Gtk.MessageType.WARNING)
+        
+        Display a dialog with title and message.
         
         Arguments:
         title -- string, the title of the dialog
