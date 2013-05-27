@@ -4,6 +4,9 @@
 if [ $# -eq 1 ]
 then
     name=PyCubic_v$1
+    cd sphinx
+    make html
+    cd ..
     rm -rf $name
     mkdir $name
     cp -r *.py *.glade *.png COPYING README tests doc $name
