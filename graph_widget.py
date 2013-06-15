@@ -282,7 +282,9 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         graph_draw(g, pos=self.pos, output=filename, output_size=quality)
 
     def tikz(self):
-        """Print current graph as TikZ code"""
+        """Print current graph as TikZ code
+        
+        TODO: appropriate node placement, for now they're just on a grid"""
         g = self.g.copy()
         g.purge_vertices()
         string = """\\begin{tikzpicture}
