@@ -58,6 +58,14 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkMenuItem" id="exportTikZ_menu">
+                        <property name="label" translatable="yes">TikZ Export</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <signal name="activate" handler="on_exportTikZ_menu_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkSeparatorMenuItem" id="separatormenuitem1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>

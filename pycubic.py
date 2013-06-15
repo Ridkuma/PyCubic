@@ -149,7 +149,8 @@ class PyCubic:
         self.activate_widget("save_layout_button")
         self.activate_widget("save_menu")
         self.activate_widget("exportPDF_menu")
-        self.activate_widget("layoutMenu")    
+        self.activate_widget("exportTikZ_menu")
+        self.activate_widget("layoutMenu")
         
     def update_statusbar(self, message):
         """Update statusbar with message"""

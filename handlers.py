@@ -27,6 +27,7 @@ class Handlers:
         self.instance.deactivate_widget("cancel_button")
         self.instance.deactivate_widget("save_menu")
         self.instance.deactivate_widget("exportPDF_menu")
+        self.instance.deactivate_widget("exportTikZ_menu")
         self.instance.deactivate_widget("layoutMenu")
 
     # Snippet for one-liner info dialogs
@@ -351,6 +352,10 @@ class Handlers:
                 logging.debug("Cancelling")
 
         filechooser.destroy()
+
+    def on_exportTikZ_menu_activate(self, menuItem):
+        """TikZ menu click handler"""
+        self.info_dialog("TikZ Export", self.instance.graphWidget.tikz(), None, Gtk.MessageType.INFO)
 
     def on_quit_menu_activate(self, menuItem):
         """Quit Menu Item click handler"""

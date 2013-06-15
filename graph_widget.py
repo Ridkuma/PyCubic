@@ -9,6 +9,7 @@ Call cub2g6.py for G6 file format save.
 import os
 import logging
 import tempfile
+import math
 from graph_tool.all import *
 import cub2g6
 
@@ -267,8 +268,7 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         self.g.vp["layout"] = self.pos
         self.g.save(filename, "xml")           
         self.modified = False
-        
-    # Export self.g to filename
+
     def export(self, filename, quality):
         """Export current graph to PDF/PS/SVG/PNG depending of filename and quality
         
@@ -280,6 +280,41 @@ class GraphWidget(graph_tool.draw.GraphWidget):
         g = self.g.copy() # local copy of the graph
         g.purge_vertices() # purge hidden vertices
         graph_draw(g, pos=self.pos, output=filename, output_size=quality)
+
+    def tikz(self):
+        """Print current graph as TikZ code"""
+        g = self.g.copy()
+        g.purge_vertices()
+        string = """\\begin{tikzpicture}
+\t\\tikzstyle{every node}=[draw,
+\t\tshape=circle];\n"""
+
+        x = 0
+        y = 0
+        width = math.floor(math.sqrt(g.num_vertices())) - 1
+
+        for v in g.vertices():
+            cur_node = g.vertex_index[v]
+            string += "\t\path ({0}, {1}) node (v{2}) {{${2}$}};\n".format(x, y, cur_node)
+            x += 1
+            if x > width:
+                x = 0
+                y += 1
+
+        first = True
+
+        for edge in g.edges():
+            source = g.vertex_index[edge.source()]
+            target = g.vertex_index[edge.target()]
+            if first:
+                string += "\t\draw (v{}) -- (v{})\n".format(source, target)
+                first = False
+            else:
+                string += "\t\t      (v{}) -- (v{})\n".format(source, target)
+
+        string = string[:-1]
+        string += ";\n\end{tikzpicture}"
+        return string
         
     def save_layout(self, layout_name):
         """Save current layout to GraphML format in file layout_name and update TreeView"""
